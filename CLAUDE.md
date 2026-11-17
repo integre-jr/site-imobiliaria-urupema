@@ -12,7 +12,9 @@ telas e a ordem de implementação (marcos M1–M10), está em
 16/11/2026** (estrutura, D1/KV, 1º deploy). **M2 (autenticação e usuários) concluído e no ar em
 16/11/2026** (testes: `bash scripts/testa-auth.sh`, instruções no topo do script). **Em 17/11/2026 o
 painel virou o próprio site editável** (spec 8.0/8.2, marco M2b): não existe mais "tela de admin"
-separada, só login/setup + o site em `/admin` com barra de edição e gavetas. As seções
+separada, só login/setup + o site em `/admin` com barra de edição e gavetas. **M3 (imóveis) feito em
+17/11/2026**: anúncios vêm do banco, gestão pela gaveta "Anúncios" e pelos botões "Editar" (testes:
+`bash scripts/testa-imoveis.sh`). As seções
 abaixo descrevem o site público, que por enquanto segue igual ao estático original, agora dentro
 de `public/`.
 
@@ -52,6 +54,10 @@ public/                  ← tudo que é servido estático (pages_build_output_d
   js/main.js             ← TODO o comportamento, um IIFE só
   imagens/               ← logos + favicon
   _routes.json           ← css/js/imagens não invocam Functions (economiza cota)
+  imoveis.html           ← listagem com filtros (gerada a partir da index; mesmos blocos compartilhados)
+  modelos/imovel.html    ← modelo da página do imóvel (o servidor preenche; /modelos/* dá 404 ao público)
+  404.html               ← página de erro (links absolutos: é servida em qualquer endereço)
+  js/imoveis.js          ← cards vindos da API (mesmo markup dos estáticos), busca, listagem, galeria
   admin/login.html setup.html ← as ÚNICAS páginas próprias do painel
   css/admin.css          ← modo edição (barra, contornos, balão, gavetas) + login; mesmos tokens
   js/admin/              ← editor.js (entrada: barra + edição no lugar; novos botões entram em montarBarra),
@@ -62,12 +68,17 @@ functions/
   api/admin/config.js    ← GET|PUT dos dados editáveis (só admin); campos, validação e links em lib/config.js
   api/admin/instagram/*  ← status, conectar (navegação → login do Instagram), desconectar; o _middleware renova o token
   api/instagram/callback.js ← volta do OAuth (sessão de admin + state em cookie) → /admin/?instagram=…
+  api/imoveis/*          ← lista pública com filtros, opcoes (vocabulários), um imóvel
+  api/admin/imoveis/*    ← anúncios: listar/criar, :id (número ou "UR-1024") GET/PUT parcial/DELETE, fotos, fotos-ordem; api/admin/fotos/:id
+  imovel/[ref].js        ← página do imóvel (lib/pagina-imovel.js, também usada em /admin/imovel/:ref)
+  fotos/[[path]].js      ← fotos do KV (imovel/<id>/<uuid>/g.jpg|p.jpg), cache eterno
   api/_middleware.js     ← erro inesperado → 500 genérico; api/[[rota]].js → 404 JSON
   api/auth/*             ← setup, login, logout ({todos:true} = todos os aparelhos), me, senha
   api/admin/_middleware.js ← sessão (401) + header X-Urupema (CSRF); context.data.usuario
   api/admin/usuarios/*   ← CRUD de usuários (só admin; ninguém tira o próprio acesso)
 lib/                     ← db.js, http.js, html.js, validacao.js, auth.js (PBKDF2, sessão, força bruta, CSRF, soAdmin), config.js,
-                           cripto.js (base64, AES-GCM com TOKEN_KEY), instagram/ (index = interface; mock.js | real.js por INSTAGRAM_MODO)
+                           cripto.js (base64, AES-GCM com TOKEN_KEY), instagram/ (index = interface; mock.js | real.js por INSTAGRAM_MODO),
+                           imoveis.js (vocabulários 6.1, validação, filtros, formato de saída), anuncios.js, pagina-imovel.js
 migrations/              ← 0001 esquema, 0002 seed, 0003 sessoes.dias, 0004 endereço em 2 chaves (endereco_1/_2)
 scripts/hash-senha.mjs   ← redefine a senha de um usuário direto no D1
 wrangler.toml  package.json  .env/.dev.vars (fora do Git)

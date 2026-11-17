@@ -1,6 +1,7 @@
 // Modo edição: carregado SÓ nas páginas servidas em /admin (o middleware injeta este script).
 // Monta a barra de edição e, para o administrador, liga a edição no lugar dos dados do site
 // (elementos com data-cfg / data-cfg-href). O que não fica "no site" abre em gavetas.
+import { abrirAnuncios, abrirEditorAnuncio } from './anuncios.js';
 import { api, ErroApi, toast, valorParaCampo } from './api.js';
 import { abrirConta } from './conta.js';
 import { abrirDados } from './dados.js';
@@ -16,7 +17,25 @@ const SPRITE = `<svg width="0" height="0" style="position:absolute" aria-hidden=
 <symbol id="adm-sair" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
 <symbol id="adm-instagram" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><path d="M17.5 6.5h.01"/></symbol>
 <symbol id="adm-fechar" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+<symbol id="adm-anuncios" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
+<symbol id="adm-mais" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></symbol>
 </svg>`;
+
+// Botão "Editar" visível ao lado de cada informação editável.
+const LAPIS = '<svg aria-hidden="true"><use href="#adm-lapis"/></svg>';
+function selo(texto, canto) {
+  const s = document.createElement('span');
+  s.className = 'cfg-lapis' + (canto ? ' cfg-lapis--canto' : '');
+  s.setAttribute('aria-hidden', 'true');
+  s.innerHTML = LAPIS + (canto ? '' : `<span>${texto}</span>`);
+  return s;
+}
+
+// Troca o texto de um dado editável sem apagar o selo "Editar" que fica dentro dele.
+function definirTexto(el, valor) {
+  [...el.childNodes].forEach((n) => { if (!(n.nodeType === 1 && n.classList.contains('cfg-lapis'))) n.remove(); });
+  el.prepend(valor);
+}
 
 const TIPO_INPUT = { telefone: 'tel', whatsapp: 'tel', email: 'email', url: 'url' };
 
@@ -51,6 +70,7 @@ function montarBarra(usuario) {
 
   const acoes = barra.querySelector('.barra-edicao__acoes');
   const minhaConta = () => abrirConta(usuario);
+  acoes.append(botaoBarra('adm-anuncios', 'Anúncios', () => abrirAnuncios()));
   if (usuario.papel === 'admin') {
     acoes.append(botaoBarra('adm-dados', 'Dados do site', () => abrirDados(estado, atualizarPagina), 'Dados'));
   }
@@ -79,7 +99,7 @@ function atualizarPagina(novo) {
   estado = novo;
   document.querySelectorAll('[data-cfg]').forEach((el) => {
     const v = estado.valores[el.dataset.cfg];
-    if (v !== undefined) el.textContent = v;
+    if (v !== undefined) definirTexto(el, v);
   });
   document.querySelectorAll('[data-cfg-href]').forEach((el) => {
     const h = estado.hrefs[el.dataset.cfgHref];
@@ -172,6 +192,10 @@ function ligarEdicaoNoLugar() {
     el.classList.add('cfg-editavel');
     el.tabIndex = 0;
     el.title = `Editar: ${campo.rotulo}`;
+    // Texto → selo "Editar" logo depois; só link/ícone (redes, botões de WhatsApp) → lápis no canto.
+    const canto = !el.dataset.cfg;
+    if (canto) el.classList.add('cfg-editavel--canto');
+    el.append(selo('Editar', canto));
   });
 
   // Captura: no modo edição, clicar num dado editável edita em vez de abrir o link.
@@ -193,6 +217,59 @@ function ligarEdicaoNoLugar() {
   });
 }
 
+// ---------- Anúncios: botões junto da vitrine, dos cards e da página do imóvel ----------
+
+function botaoAcao(texto, classe, aoClicar, icone = 'adm-lapis') {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = `btn ${classe} btn--sm`;
+  b.innerHTML = `<svg aria-hidden="true"><use href="#${icone}"/></svg>`;
+  b.append(' ' + texto);
+  b.addEventListener('click', aoClicar);
+  return b;
+}
+
+function ligarAnuncios() {
+  // Vitrine da home e listagem: "Editar anúncios" + "Novo anúncio"
+  document.querySelectorAll('[data-admin-anuncios]').forEach((slot) => {
+    slot.classList.add('admin-acoes');
+    slot.append(
+      botaoAcao('Editar anúncios', 'btn--gold', () => abrirAnuncios()),
+      botaoAcao('Novo anúncio', 'btn--outline', () => abrirEditorAnuncio(), 'adm-mais'),
+    );
+  });
+  // Página do imóvel: "Editar este anúncio"
+  const main = document.querySelector('main[data-imovel-id]');
+  const slot = document.querySelector('[data-admin-anuncio]');
+  if (main && slot) {
+    slot.classList.add('admin-acoes');
+    slot.append(botaoAcao('Editar este anúncio', 'btn--gold', () => abrirEditorAnuncio(main.dataset.imovelId)));
+  }
+  decorarCards(document);
+  document.addEventListener('urupema:cards', (e) => decorarCards(e.detail.grade));
+}
+
+// Cada card ganha um botão "Editar" sobre a foto.
+function decorarCards(escopo) {
+  escopo.querySelectorAll('.property-card').forEach((card) => {
+    const ref = card.querySelector('.card-fav[data-ref]')?.dataset.ref;
+    const media = card.querySelector('.card-media');
+    if (!ref || !media || media.querySelector('.card-editar')) return;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'card-editar';
+    b.innerHTML = LAPIS;
+    b.append(' Editar');
+    b.setAttribute('aria-label', `Editar o anúncio ${ref}`);
+    b.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      abrirEditorAnuncio(ref);
+    });
+    media.append(b);
+  });
+}
+
 // ---------- Início ----------
 
 document.body.insertAdjacentHTML('afterbegin', SPRITE);
@@ -202,6 +279,7 @@ if (usuario.papel === 'admin') {
   ligarEdicaoNoLugar();
 }
 montarBarra(usuario);
+ligarAnuncios();
 
 // Volta do login do Instagram: /admin/?instagram=conectado|cancelado|erro
 const retornoIg = new URLSearchParams(location.search).get('instagram');

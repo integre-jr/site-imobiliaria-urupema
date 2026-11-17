@@ -1,14 +1,19 @@
 // Painel lateral (gaveta) por cima do site, para o que não se edita "no lugar":
-// usuários, minha conta, dados do site e, nos próximos marcos, leads, Instagram e portais.
+// anúncios, usuários, minha conta, dados do site, Instagram (e, nos próximos marcos, leads e portais).
 
 let aberta = null;
+let antesDeFechar = null;
 
-export function fecharGaveta() {
-  if (!aberta) return;
+// forcar: fecha sem perguntar (ex.: depois de salvar).
+export function fecharGaveta({ forcar = false } = {}) {
+  if (!aberta) return true;
+  if (!forcar && antesDeFechar && antesDeFechar() === false) return false;
   aberta.remove();
   aberta = null;
+  antesDeFechar = null;
   document.documentElement.classList.remove('gaveta-aberta');
   document.removeEventListener('keydown', aoTeclar);
+  return true;
 }
 
 function aoTeclar(e) {
@@ -17,10 +22,11 @@ function aoTeclar(e) {
 }
 
 // Abre a gaveta e devolve o elemento onde o conteúdo deve ser colocado.
-export function abrirGaveta(titulo) {
-  fecharGaveta();
+// larga: para formulários grandes (anúncio). aoFechar: devolve false para impedir o fechamento.
+export function abrirGaveta(titulo, { larga = false, aoFechar = null } = {}) {
+  if (!fecharGaveta()) return null;
   const raiz = document.createElement('div');
-  raiz.className = 'gaveta';
+  raiz.className = 'gaveta' + (larga ? ' gaveta--larga' : '');
   raiz.innerHTML = `
     <div class="gaveta__fundo" data-fechar-gaveta></div>
     <section class="gaveta__painel" role="dialog" aria-modal="true" aria-labelledby="gaveta-titulo">
@@ -33,11 +39,14 @@ export function abrirGaveta(titulo) {
       <div class="gaveta__corpo"></div>
     </section>`;
   raiz.querySelector('h2').textContent = titulo;
-  raiz.querySelectorAll('[data-fechar-gaveta]').forEach((b) => b.addEventListener('click', fecharGaveta));
+  raiz.querySelectorAll('[data-fechar-gaveta]').forEach((b) => b.addEventListener('click', () => fecharGaveta()));
   document.body.append(raiz);
   document.documentElement.classList.add('gaveta-aberta');
   document.addEventListener('keydown', aoTeclar);
   aberta = raiz;
+  antesDeFechar = aoFechar;
   raiz.querySelector('.gaveta__fechar').focus();
   return raiz.querySelector('.gaveta__corpo');
 }
+
+export const tituloGaveta = (texto) => { if (aberta) aberta.querySelector('#gaveta-titulo').textContent = texto; };

@@ -86,7 +86,7 @@ export function mostrarErro(form, erro) {
     toast(erro.message, 'erro');
   }
   const campo = erro.campo && form.elements[erro.campo];
-  if (campo) {
+  if (campo && campo.classList) {     // grupos de rádio (RadioNodeList) não têm classList
     campo.classList.add('is-invalido');
     campo.focus();
   }

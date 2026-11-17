@@ -40,25 +40,30 @@
     });
   });
 
-  /* ---------- Property filter chips ---------- */
-  const chips = $$('.chip[data-filter]');
-  const cards = $$('.property-card[data-type]');
-  chips.forEach(chip => {
-    chip.addEventListener('click', () => {
-      chips.forEach(c => c.classList.remove('is-active'));
-      chip.classList.add('is-active');
-      const f = chip.dataset.filter;
-      cards.forEach(card => {
-        const show = f === 'all' || card.dataset.type === f;
-        card.style.display = show ? '' : 'none';
-      });
+  /* ---------- Property filter chips ----------
+     Delegação de eventos: os cards da vitrine chegam depois, via js/imoveis.js. */
+  const applyChips = (scope = document) => {
+    const active = $('.chip.is-active[data-filter]', scope);
+    const f = active ? active.dataset.filter : 'all';
+    $$('.property-card[data-type]', scope).forEach(card => {
+      card.style.display = (f === 'all' || card.dataset.type === f) ? '' : 'none';
     });
+  };
+  document.addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip[data-filter]');
+    if (!chip) return;
+    const scope = chip.closest('section') || document;
+    $$('.chip[data-filter]', scope).forEach(c => c.classList.remove('is-active'));
+    chip.classList.add('is-active');
+    applyChips(scope);
   });
 
-  /* ---------- Favorites (localStorage) ---------- */
+  /* ---------- Favorites (localStorage) ----------
+     Botões: .card-fav[data-ref] (cards) e [data-fav-ref] (página do imóvel). */
   const FAV_KEY = 'urupema:favs';
   const getFavs = () => { try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; } catch { return []; } };
-  const setFavs = (a) => localStorage.setItem(FAV_KEY, JSON.stringify(a));
+  const setFavs = (a) => { try { localStorage.setItem(FAV_KEY, JSON.stringify(a)); } catch { /* modo privado */ } };
+  const favRef = (btn) => btn.dataset.ref || btn.dataset.favRef;
   const updateFavCount = () => {
     const n = getFavs().length;
     $$('.fav-count').forEach(el => {
@@ -68,47 +73,57 @@
   };
   const syncFavButtons = () => {
     const favs = getFavs();
-    $$('.card-fav[data-ref]').forEach(btn => {
-      btn.classList.toggle('is-active', favs.includes(btn.dataset.ref));
+    $$('.card-fav[data-ref], [data-fav-ref]').forEach(btn => {
+      const on = favs.includes(favRef(btn));
+      btn.classList.toggle('is-active', on);
+      const label = $('span', btn);
+      if (btn.hasAttribute('data-fav-ref') && label) label.textContent = on ? 'Nos seus favoritos' : 'Favoritar';
     });
+    updateFavCount();
   };
-  $$('.card-fav[data-ref]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const ref = btn.dataset.ref;
-      let favs = getFavs();
-      if (favs.includes(ref)) favs = favs.filter(r => r !== ref);
-      else favs.push(ref);
-      setFavs(favs);
-      syncFavButtons();
-      updateFavCount();
-    });
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.card-fav[data-ref], [data-fav-ref]');
+    if (!btn) return;
+    e.preventDefault();
+    const ref = favRef(btn);
+    let favs = getFavs();
+    if (favs.includes(ref)) favs = favs.filter(r => r !== ref);
+    else favs.push(ref);
+    setFavs(favs);
+    syncFavButtons();
   });
-  updateFavCount();
   syncFavButtons();
 
-  /* ---------- Image fallback (branded placeholder) ---------- */
-  $$('.card-media img, .split__media img, .hero__bg img').forEach(img => {
-    img.addEventListener('error', () => {
-      const media = img.closest('.card-media, .split__media, .hero__bg');
-      if (media) media.classList.add('is-fallback');
+  /* ---------- Image fallback (branded placeholder) ----------
+     Captura no document: vale também para imagens inseridas depois. */
+  const MEDIA = '.card-media, .split__media, .hero__bg';
+  const fallback = (img) => {
+    const media = img.closest(MEDIA);
+    if (media) media.classList.add('is-fallback');
+  };
+  document.addEventListener('error', (e) => {
+    if (e.target.tagName === 'IMG') fallback(e.target);
+  }, true);
+  const checkBroken = (scope = document) => {
+    $$('.card-media img, .split__media img, .hero__bg img', scope).forEach(img => {
+      if (img.complete && img.naturalWidth === 0 && img.getAttribute('src')) fallback(img);
     });
-    // handle cached-broken images
-    if (img.complete && img.naturalWidth === 0) img.dispatchEvent(new Event('error'));
-  });
+  };
+  checkBroken();
 
   /* ---------- Scroll reveal ---------- */
-  const reveals = $$('.reveal');
-  if ('IntersectionObserver' in window && reveals.length) {
-    const io = new IntersectionObserver((entries) => {
+  const io = 'IntersectionObserver' in window
+    ? new IntersectionObserver((entries) => {
       entries.forEach(en => {
         if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); }
       });
-    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-    reveals.forEach(r => io.observe(r));
-  } else {
-    reveals.forEach(r => r.classList.add('is-in'));
-  }
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' })
+    : null;
+  const observeReveal = (scope = document) => {
+    const els = scope.classList && scope.classList.contains('reveal') ? [scope] : $$('.reveal:not(.is-in)', scope);
+    els.forEach(r => (io ? io.observe(r) : r.classList.add('is-in')));
+  };
+  observeReveal();
 
   /* ---------- Wizard (Financie) ---------- */
   const wizard = $('#wizard');
@@ -197,12 +212,20 @@
     });
   });
 
-  /* ---------- Quick reference search ---------- */
+  /* ---------- Quick reference search ----------
+     "1024", "ur1024" ou "UR-1024" → página do imóvel. No painel (/admin) continua no painel. */
+  const adminPrefix = () => (document.documentElement.hasAttribute('data-admin') ? '/admin' : '');
+  const normalizeRef = (v) => {
+    const m = String(v || '').trim().toUpperCase().match(/^(?:UR)?-?\s*(\d{1,7})$/);
+    return m ? 'UR-' + m[1] : null;
+  };
   $$('.ref-search, .mobile-nav__ref').forEach(box => {
     const input = $('input', box);
     const go = () => {
       const v = (input?.value || '').trim();
-      if (v) window.location.href = `index.html#imoveis?ref=${encodeURIComponent(v)}`;
+      if (!v) return;
+      const ref = normalizeRef(v);
+      window.location.href = ref ? `${adminPrefix()}/imovel/${ref}` : `${adminPrefix()}/imoveis?ref=${encodeURIComponent(v)}`;
     };
     $('button', box)?.addEventListener('click', go);
     input?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); go(); } });
@@ -210,5 +233,8 @@
 
   /* ---------- Footer year ---------- */
   $$('.js-year').forEach(el => el.textContent = new Date().getFullYear());
+
+  /* ---------- API para js/imoveis.js (cards inseridos depois do carregamento) ---------- */
+  window.Urupema = { syncFavs: syncFavButtons, getFavs, observeReveal, applyChips, checkBroken, normalizeRef, adminPrefix };
 
 })();

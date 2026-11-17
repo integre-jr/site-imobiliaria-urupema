@@ -69,6 +69,7 @@
 
     <nav class="nav" aria-label="Menu principal">
       <a href="index.html" class="is-active">Início</a>
+      <a href="imoveis.html">Imóveis</a>
       <a href="sobre.html">Sobre</a>
       <a href="financie.html">Financie</a>
       <a href="negocie.html">Negocie seu Imóvel</a>
@@ -81,7 +82,7 @@
         <input type="text" placeholder="Cód. de referência" aria-label="Buscar por código de referência">
         <button type="button" aria-label="Buscar"><svg><use href="#i-arrow-right"/></svg></button>
       </div>
-      <a href="#imoveis" class="icon-btn" aria-label="Favoritos" title="Favoritos">
+      <a href="imoveis.html?favoritos=1" class="icon-btn" aria-label="Favoritos" title="Favoritos">
         <svg><use href="#i-heart"/></svg>
         <span class="badge-count fav-count">0</span>
       </a>
@@ -104,6 +105,7 @@
     </div>
     <nav class="mobile-nav__links">
       <a href="index.html" class="is-active">Início <svg><use href="#i-chevron-right"/></svg></a>
+      <a href="imoveis.html">Imóveis <svg><use href="#i-chevron-right"/></svg></a>
       <a href="sobre.html">Sobre <svg><use href="#i-chevron-right"/></svg></a>
       <a href="financie.html">Financie <svg><use href="#i-chevron-right"/></svg></a>
       <a href="negocie.html">Negocie seu Imóvel <svg><use href="#i-chevron-right"/></svg></a>
@@ -153,11 +155,11 @@
             <svg><use href="#i-home"/></svg>
             <select id="f-tipo">
               <option value="">Todos os tipos</option>
-              <option>Casa</option>
-              <option>Apartamento</option>
-              <option>Chácara / Sítio</option>
-              <option>Terreno</option>
-              <option>Comercial</option>
+              <option value="casa">Casa</option>
+              <option value="apartamento">Apartamento</option>
+              <option value="chacara">Chácara / Sítio</option>
+              <option value="terreno">Terreno</option>
+              <option value="comercial">Comercial</option>
             </select>
           </div>
         </div>
@@ -167,20 +169,19 @@
             <svg><use href="#i-pin"/></svg>
             <select id="f-local">
               <option value="">Urupema e região</option>
-              <option>Centro — Urupema</option>
-              <option>Rio dos Bugres</option>
-              <option>Santo Antônio</option>
-              <option>Interior — Urupema</option>
-              <option>São Joaquim</option>
+              <option value="Centro">Centro</option>
+              <option value="Rio dos Bugres">Rio dos Bugres</option>
+              <option value="Santo Antônio">Santo Antônio</option>
+              <option value="Interior">Interior</option>
             </select>
           </div>
         </div>
         <div class="field">
           <label>Faixa de preço</label>
           <div class="control range">
-            <input type="text" inputmode="numeric" placeholder="Mín." aria-label="Preço mínimo">
+            <input type="text" id="f-min" inputmode="numeric" placeholder="Mín." aria-label="Preço mínimo">
             <span>—</span>
-            <input type="text" inputmode="numeric" placeholder="Máx." aria-label="Preço máximo">
+            <input type="text" id="f-max" inputmode="numeric" placeholder="Máx." aria-label="Preço máximo">
           </div>
         </div>
         <div class="field">
@@ -191,7 +192,7 @@
           </div>
         </div>
         <div class="searchbar__submit">
-          <a href="#imoveis" class="btn btn--gold"><svg><use href="#i-search"/></svg> Pesquisar Imóveis</a>
+          <a href="imoveis.html" id="buscar" class="btn btn--gold"><svg><use href="#i-search"/></svg> Pesquisar Imóveis</a>
         </div>
       </div>
     </form>
@@ -210,9 +211,10 @@
           <button class="chip" data-filter="venda">Venda</button>
           <button class="chip" data-filter="aluguel">Aluguel</button>
         </div>
+        <div class="admin-slot" data-admin-anuncios></div>
       </div>
 
-      <div class="property-grid">
+      <div class="property-grid" data-vitrine>
 
         <!-- Card 1 -->
         <article class="property-card reveal" data-type="venda">
@@ -233,7 +235,7 @@
               <span class="spec"><svg><use href="#i-car"/></svg> 2 vagas</span>
               <span class="spec"><svg><use href="#i-area"/></svg> 180 m²</span>
             </div>
-            <div class="card-cta"><a href="contato.html" class="btn btn--outline btn--sm">Ver detalhes <svg><use href="#i-arrow-right"/></svg></a></div>
+            <div class="card-cta"><a href="/imovel/UR-1024" class="btn btn--outline btn--sm">Ver detalhes <svg><use href="#i-arrow-right"/></svg></a></div>
           </div>
         </article>
 
@@ -256,7 +258,7 @@
               <span class="spec"><svg><use href="#i-car"/></svg> 4 vagas</span>
               <span class="spec"><svg><use href="#i-area"/></svg> 5.000 m²</span>
             </div>
-            <div class="card-cta"><a href="contato.html" class="btn btn--outline btn--sm">Ver detalhes <svg><use href="#i-arrow-right"/></svg></a></div>
+            <div class="card-cta"><a href="/imovel/UR-1031" class="btn btn--outline btn--sm">Ver detalhes <svg><use href="#i-arrow-right"/></svg></a></div>
           </div>
         </article>
 
@@ -279,7 +281,7 @@
               <span class="spec"><svg><use href="#i-car"/></svg> 1 vaga</span>
               <span class="spec"><svg><use href="#i-area"/></svg> 68 m²</span>
             </div>
-            <div class="card-cta"><a href="contato.html" class="btn btn--outline btn--sm">Ver detalhes <svg><use href="#i-arrow-right"/></svg></a></div>
+            <div class="card-cta"><a href="/imovel/UR-1042" class="btn btn--outline btn--sm">Ver detalhes <svg><use href="#i-arrow-right"/></svg></a></div>
           </div>
         </article>
 
@@ -302,7 +304,7 @@
               <span class="spec"><svg><use href="#i-car"/></svg> 2 vagas</span>
               <span class="spec"><svg><use href="#i-area"/></svg> 90 m²</span>
             </div>
-            <div class="card-cta"><a href="contato.html" class="btn btn--outline btn--sm">Ver detalhes <svg><use href="#i-arrow-right"/></svg></a></div>
+            <div class="card-cta"><a href="/imovel/UR-2007" class="btn btn--outline btn--sm">Ver detalhes <svg><use href="#i-arrow-right"/></svg></a></div>
           </div>
         </article>
 
@@ -324,7 +326,7 @@
               <span class="spec"><svg><use href="#i-mountain"/></svg> Vista serra</span>
               <span class="spec"><svg><use href="#i-check"/></svg> Escriturado</span>
             </div>
-            <div class="card-cta"><a href="contato.html" class="btn btn--outline btn--sm">Ver detalhes <svg><use href="#i-arrow-right"/></svg></a></div>
+            <div class="card-cta"><a href="/imovel/UR-1050" class="btn btn--outline btn--sm">Ver detalhes <svg><use href="#i-arrow-right"/></svg></a></div>
           </div>
         </article>
 
@@ -347,14 +349,14 @@
               <span class="spec"><svg><use href="#i-car"/></svg> 2 vagas</span>
               <span class="spec"><svg><use href="#i-area"/></svg> 150 m²</span>
             </div>
-            <div class="card-cta"><a href="contato.html" class="btn btn--outline btn--sm">Ver detalhes <svg><use href="#i-arrow-right"/></svg></a></div>
+            <div class="card-cta"><a href="/imovel/UR-2015" class="btn btn--outline btn--sm">Ver detalhes <svg><use href="#i-arrow-right"/></svg></a></div>
           </div>
         </article>
 
       </div>
 
       <div class="grid-more">
-        <a href="contato.html" class="btn btn--primary btn--lg">Fale com um corretor <svg><use href="#i-arrow-right"/></svg></a>
+        <a href="imoveis.html" class="btn btn--primary btn--lg">Ver todos os imóveis <svg><use href="#i-arrow-right"/></svg></a>
       </div>
     </div>
   </section>
@@ -455,8 +457,8 @@
       <div class="footer__col">
         <h5>Serviços</h5>
         <ul>
-          <li><a href="index.html#imoveis">Comprar imóvel</a></li>
-          <li><a href="index.html#imoveis">Alugar imóvel</a></li>
+          <li><a href="imoveis.html?finalidade=venda">Comprar imóvel</a></li>
+          <li><a href="imoveis.html?finalidade=aluguel">Alugar imóvel</a></li>
           <li><a href="negocie.html">Vender / Anunciar</a></li>
           <li><a href="financie.html">Financiamento</a></li>
           <li><a href="contato.html">Avaliação de imóvel</a></li>
@@ -481,5 +483,6 @@
 <a href="https://wa.me/5549991603030" data-cfg-href="contato.whatsapp" class="wa-float" aria-label="Fale conosco no WhatsApp"><svg><use href="#i-whatsapp"/></svg></a>
 
 <script src="js/main.js"></script>
+<script src="js/imoveis.js"></script>
 </body>
 </html>

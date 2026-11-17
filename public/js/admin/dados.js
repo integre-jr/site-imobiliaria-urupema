@@ -8,9 +8,10 @@ const TIPO_INPUT = { telefone: 'tel', whatsapp: 'tel', email: 'email', url: 'url
 
 export function abrirDados(estado, aoSalvar) {
   const corpo = abrirGaveta('Dados do site');
+  if (!corpo) return;   // havia um anúncio com alterações não salvas e a pessoa quis continuar nele
   const intro = document.createElement('p');
   intro.className = 'gaveta__intro';
-  intro.textContent = 'O que você salvar aqui aparece em todas as páginas do site. Também dá para clicar direto nos textos com contorno pontilhado.';
+  intro.textContent = 'O que você salvar aqui aparece em todas as páginas do site. Também dá para clicar direto nos botões "Editar" espalhados pelo site.';
 
   const form = document.createElement('form');
   form.className = 'adm-form';

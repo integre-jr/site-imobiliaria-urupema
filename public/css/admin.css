@@ -297,3 +297,137 @@ body.admin--auth {
 .auth .adm-card > p { margin-bottom: 20px; }
 .auth__rodape { text-align: center; margin-top: 18px; font-size: .88rem; color: rgba(255,255,255,.8); }
 .auth__rodape a { color: #fff; font-weight: 600; }
+
+/* ============================================================
+   5. BOTÕES "EDITAR" E ANÚNCIOS (marco M3)
+   ============================================================ */
+/* Selo "Editar" ao lado de cada dado editável */
+.cfg-lapis {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  background: var(--gold);
+  color: var(--forest-900);
+  font: 700 .72rem/1.3 var(--font-display);
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  vertical-align: middle;
+  box-shadow: var(--shadow-sm);
+  pointer-events: none;            /* o clique é tratado pelo elemento editável */
+}
+.cfg-lapis svg { width: 12px; height: 12px; }
+.cfg-editavel--canto { position: relative; }
+.cfg-lapis--canto {
+  position: absolute;
+  top: -9px; right: -9px;
+  margin: 0;
+  padding: 4px;
+  z-index: 2;
+}
+.cfg-editavel:hover .cfg-lapis, .cfg-editavel:focus-visible .cfg-lapis { background: var(--forest); color: #fff; }
+
+/* Botões do painel junto da vitrine, da listagem e da página do imóvel */
+.admin-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 14px;
+  margin-block: 12px 18px;
+  border: 1.5px dashed var(--gold);
+  border-radius: var(--r-lg);
+  background: var(--gold-soft);
+}
+.filters-row .admin-acoes { flex-basis: 100%; margin-bottom: 0; }
+
+/* "Editar" sobre a foto de cada card */
+.card-editar {
+  position: absolute;
+  right: 12px; bottom: 12px;
+  z-index: 3;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 13px;
+  border-radius: var(--r-pill);
+  background: var(--gold);
+  color: var(--forest-900);
+  font: 700 .82rem/1 var(--font-display);
+  box-shadow: var(--shadow-md);
+}
+.card-editar:hover { background: var(--forest); color: #fff; }
+.card-editar svg { width: 14px; height: 14px; }
+
+/* Gaveta larga (formulário do anúncio) */
+.gaveta--larga .gaveta__painel { width: min(900px, 100vw); }
+
+/* Lista de anúncios */
+.anuncios-topo { display: grid; grid-template-columns: auto 1fr 200px; gap: 10px; align-items: center; }
+.anuncios-uso { font-size: .86rem; color: var(--muted); }
+.anuncios-uso.is-alerta { color: var(--danger); font-weight: 600; }
+.anuncio-item { flex-wrap: nowrap; align-items: flex-start; }
+.anuncio-capa { width: 96px; aspect-ratio: 4 / 3; flex-shrink: 0; border-radius: var(--r-sm); overflow: hidden; background: var(--line-soft); }
+.anuncio-capa img { width: 100%; height: 100%; object-fit: cover; }
+.anuncio-item .adm-item__info { flex: 1 1 auto; }
+.anuncio-item .adm-item__acoes { max-width: 260px; justify-content: flex-end; }
+.anuncio-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-block: 4px; }
+.anuncio-tags .tag { margin-left: 0; }
+
+/* Formulário do anúncio */
+.anuncio-form .grid-fields { gap: 14px; }
+.anuncio-form .rotulo { font-family: var(--font-display); font-weight: 600; font-size: .88rem; color: var(--ink); margin-bottom: 8px; }
+.anuncio-form .radio-pill span { padding: 9px 16px; }
+.anuncio-form .radio-pill input:checked + span { background: var(--forest); border-color: var(--forest); color: #fff; }
+.anuncio-caracteristicas { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px 16px; }
+.anuncio-mapa summary { cursor: pointer; font-weight: 600; color: var(--forest); }
+.anuncio-mapa[open] summary { margin-bottom: 10px; }
+.anuncio-acoes {
+  position: sticky;
+  bottom: -22px;
+  z-index: 5;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px;
+  margin: 0 -22px -22px;
+  padding: 14px 22px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -6px 18px rgba(30,58,43,.06);
+}
+.anuncio-acoes__info { margin-right: auto; font-size: .86rem; color: var(--muted); }
+.anuncio-acoes__info a { color: var(--forest); font-weight: 600; text-decoration: underline; }
+
+/* Fotos do anúncio */
+.fotos-zona {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 22px;
+  border: 2px dashed var(--line);
+  border-radius: var(--r-lg);
+  background: var(--bg);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s var(--ease), background .2s var(--ease);
+}
+.fotos-zona strong { font-family: var(--font-display); color: var(--forest); font-size: 1.02rem; }
+.fotos-zona span { font-size: .86rem; color: var(--muted); }
+.fotos-zona:hover, .fotos-zona:focus-visible, .fotos-zona.is-sobre { border-color: var(--moss); background: var(--moss-soft); }
+.fotos-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.foto-item { position: relative; border-radius: var(--r-sm); overflow: hidden; background: var(--line-soft); aspect-ratio: 4 / 3; }
+.foto-item img { width: 100%; height: 100%; object-fit: cover; }
+.foto-capa { position: absolute; top: 8px; left: 8px; padding: 3px 10px; border-radius: var(--r-pill); background: var(--gold); color: var(--forest-900); font: 700 .74rem/1.3 var(--font-display); }
+.foto-acoes { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; gap: 4px; padding: 6px; background: linear-gradient(transparent, rgba(22,40,30,.75)); }
+.foto-btn { width: 32px; height: 32px; border-radius: var(--r-pill); background: rgba(255,255,255,.92); color: var(--forest); font-weight: 700; font-size: .95rem; }
+.foto-btn:hover:not(:disabled) { background: var(--gold); }
+.foto-btn:disabled { opacity: .35; cursor: default; }
+
+@media (max-width: 620px) {
+  .anuncios-topo { grid-template-columns: 1fr; }
+  .anuncio-item { flex-wrap: wrap; }
+  .anuncio-item .adm-item__acoes { max-width: none; justify-content: flex-start; }
+  .anuncio-form .grid-fields, .anuncio-form .grid-fields--3 { grid-template-columns: 1fr 1fr; }
+  .anuncio-form .col-span-full { grid-column: 1 / -1; }
+  .fotos-grade { grid-template-columns: repeat(2, 1fr); }
+  .admin-acoes .btn { flex: 1; }
+}
+/* Nos números do topo da home, só o lápis: a palavra "Editar" empurraria o 3º número para outra linha */
+.hero__stat .cfg-lapis { padding: 4px; margin-left: 6px; }
+.hero__stat .cfg-lapis span { display: none; }

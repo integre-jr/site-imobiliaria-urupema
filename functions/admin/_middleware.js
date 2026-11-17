@@ -6,8 +6,9 @@
 import { comHeaders, lerSessao } from '../../lib/auth.js';
 import { aplicarConfig, lerConfig } from '../../lib/config.js';
 import { um } from '../../lib/db.js';
+import { paginaImovel } from '../../lib/pagina-imovel.js';
 
-const PAGINAS_DO_SITE = new Set(['index', 'sobre', 'financie', 'negocie', 'contato']);
+const PAGINAS_DO_SITE = new Set(['index', 'imoveis', 'sobre', 'financie', 'negocie', 'contato']);
 const SEM_CACHE = { 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' };
 
 const redirecionar = (url, caminho) => new Response(null, { status: 302, headers: { Location: new URL(caminho, url).href } });
@@ -42,10 +43,16 @@ export async function onRequest({ request, env, next }) {
     return s ? redirecionar(url, '/admin/') : comHeaders(await next(), null, SEM_CACHE);
   }
   if (!s) return redirecionar(url, '/admin/login?volta=' + encodeURIComponent(url.pathname + url.search));
-  if (!PAGINAS_DO_SITE.has(pagina)) return naoEncontrado();
 
-  const original = await env.ASSETS.fetch(new URL(pagina === 'index' ? '/' : '/' + pagina, url));
-  if (!original.ok) return naoEncontrado();
+  // /admin/imovel/UR-1024 → página do imóvel (no painel aparece mesmo se for rascunho)
+  const refImovel = pagina.match(/^imovel\/([^/]+)$/)?.[1];
+  let original;
+  if (refImovel) {
+    original = await paginaImovel(env, request, decodeURIComponent(refImovel), { admin: true });
+  } else if (PAGINAS_DO_SITE.has(pagina)) {
+    original = await env.ASSETS.fetch(new URL(pagina === 'index' ? '/' : '/' + pagina, url));
+  }
+  if (!original?.ok) return naoEncontrado();
 
   const reescrever = (atributo) => ({
     element(el) {

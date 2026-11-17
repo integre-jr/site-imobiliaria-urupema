@@ -116,6 +116,7 @@ function formLegenda(estado, aoSalvarConfig) {
 
 export async function abrirInstagram(usuario, estado, aoSalvarConfig) {
   const corpo = abrirGaveta('Instagram');
+  if (!corpo) return;   // havia um anúncio com alterações não salvas e a pessoa quis continuar nele
   const carregar = async () => {
     corpo.replaceChildren(el('p', 'gaveta__intro', 'Carregando…'));
     let st;

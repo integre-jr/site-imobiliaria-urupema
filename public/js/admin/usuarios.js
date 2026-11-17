@@ -180,6 +180,7 @@ export function abrirUsuarios(abrirMinhaConta) {
   abrirConta = abrirMinhaConta;
   prepararDialogos();
   const corpo = abrirGaveta('Usuários');
+  if (!corpo) return;   // havia um anúncio com alterações não salvas e a pessoa quis continuar nele
   const intro = el('p', 'gaveta__intro', 'Quem pode entrar no painel. Corretores cuidam de imóveis, leads e Instagram; só o administrador mexe em usuários e nos dados do site.');
   const novo = botao('Novo usuário', () => abrirUsuario(), 'btn--primary');
   lista = el('ul', 'adm-lista');

@@ -24,6 +24,7 @@ const HTML = `
 
 export function abrirConta(usuario) {
   const corpo = abrirGaveta('Minha conta');
+  if (!corpo) return;   // havia um anúncio com alterações não salvas e a pessoa quis continuar nele
   corpo.innerHTML = HTML;    // markup fixo; dados do usuário entram abaixo com textContent
   corpo.querySelector('[data-quem]').textContent =
     `${usuario.nome} · ${usuario.email} · ${usuario.papel === 'admin' ? 'Administrador' : 'Corretor'}`;
