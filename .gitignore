@@ -2,3 +2,7 @@
 CLAUDE.local.md
 .claude/settings.local.json
 .vscode/
+node_modules/
+.wrangler/
+.dev.vars
+.env

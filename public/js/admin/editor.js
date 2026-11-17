@@ -1,0 +1,198 @@
+// Modo edição: carregado SÓ nas páginas servidas em /admin (o middleware injeta este script).
+// Monta a barra de edição e, para o administrador, liga a edição no lugar dos dados do site
+// (elementos com data-cfg / data-cfg-href). O que não fica "no site" abre em gavetas.
+import { api, ErroApi, toast, valorParaCampo } from './api.js';
+import { abrirConta } from './conta.js';
+import { abrirDados } from './dados.js';
+import { abrirUsuarios } from './usuarios.js';
+
+const SPRITE = `<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="adm-lapis" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+<symbol id="adm-dados" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></symbol>
+<symbol id="adm-usuarios" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+<symbol id="adm-conta" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+<symbol id="adm-externo" viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+<symbol id="adm-sair" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
+<symbol id="adm-fechar" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+</svg>`;
+
+const TIPO_INPUT = { telefone: 'tel', whatsapp: 'tel', email: 'email', url: 'url' };
+
+let estado = null;   // { valores, hrefs, mapa, campos } (só do administrador)
+
+// ---------- Barra de edição ----------
+
+function botaoBarra(icone, rotulo, aoClicar) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'barra-edicao__botao';
+  b.innerHTML = `<svg aria-hidden="true"><use href="#${icone}"/></svg><span></span>`;
+  b.querySelector('span').textContent = rotulo;
+  b.addEventListener('click', aoClicar);
+  return b;
+}
+
+function montarBarra(usuario) {
+  const barra = document.createElement('nav');
+  barra.className = 'barra-edicao';
+  barra.setAttribute('aria-label', 'Barra de edição');
+  barra.innerHTML = `<div class="barra-edicao__status">
+      <span class="barra-edicao__selo"><svg aria-hidden="true"><use href="#adm-lapis"/></svg>Modo edição</span>
+      <span class="barra-edicao__quem"></span>
+    </div>
+    <div class="barra-edicao__acoes"></div>`;
+  barra.querySelector('.barra-edicao__quem').textContent =
+    `${usuario.nome.split(' ')[0]} · ${usuario.papel === 'admin' ? 'Administrador' : 'Corretor'}`;
+
+  const acoes = barra.querySelector('.barra-edicao__acoes');
+  const minhaConta = () => abrirConta(usuario);
+  if (usuario.papel === 'admin') {
+    acoes.append(
+      botaoBarra('adm-dados', 'Dados do site', () => abrirDados(estado, atualizarPagina)),
+      botaoBarra('adm-usuarios', 'Usuários', () => abrirUsuarios(minhaConta)),
+    );
+  }
+  acoes.append(
+    botaoBarra('adm-conta', 'Minha conta', minhaConta),
+    botaoBarra('adm-externo', 'Ver site', () => {
+      window.open(location.pathname.replace(/^\/admin/, '') || '/', '_blank', 'noopener');
+    }),
+    botaoBarra('adm-sair', 'Sair', async () => {
+      await api('/api/auth/logout', { metodo: 'POST' }).catch(() => {});
+      location.href = '/admin/login';
+    }),
+  );
+  document.body.append(barra);
+}
+
+// ---------- Edição no lugar ----------
+
+const chaveDe = (el) => el.dataset.cfg || el.dataset.cfgHref;
+
+function atualizarPagina(novo) {
+  estado = novo;
+  document.querySelectorAll('[data-cfg]').forEach((el) => {
+    const v = estado.valores[el.dataset.cfg];
+    if (v !== undefined) el.textContent = v;
+  });
+  document.querySelectorAll('[data-cfg-href]').forEach((el) => {
+    const h = estado.hrefs[el.dataset.cfgHref];
+    if (h) el.href = h;
+  });
+  document.querySelectorAll('[data-cfg-mapa]').forEach((el) => {
+    if (el.src !== estado.mapa) el.src = estado.mapa;
+  });
+}
+
+let pop = null;
+
+function fecharPop() {
+  if (!pop) return;
+  pop.remove();
+  pop = null;
+}
+
+function abrirPop(alvo) {
+  fecharPop();
+  const chave = chaveDe(alvo);
+  const campo = estado.campos[chave];
+  if (!campo) return;
+
+  pop = document.createElement('form');
+  pop.className = 'cfg-pop adm-form';
+  pop.setAttribute('role', 'dialog');
+  pop.setAttribute('aria-label', 'Editar ' + campo.rotulo);
+  pop.innerHTML = `<label class="cfg-pop__rotulo" for="cfg-pop-input"></label>
+    <input class="input" id="cfg-pop-input" name="valor" required>
+    <span class="hint" hidden></span>
+    <div class="form-erro" role="alert" hidden></div>
+    <div class="adm-form__acoes">
+      <button class="btn btn--outline btn--sm" type="button" data-cancelar>Cancelar</button>
+      <button class="btn btn--primary btn--sm" type="submit">Salvar</button>
+    </div>`;
+  pop.querySelector('label').textContent = campo.rotulo;
+  const input = pop.querySelector('input');
+  input.type = TIPO_INPUT[campo.tipo] || 'text';
+  if (campo.max) input.maxLength = campo.max;
+  input.value = valorParaCampo(campo, estado.valores[chave]);
+  if (campo.ajuda) {
+    const dica = pop.querySelector('.hint');
+    dica.textContent = campo.ajuda;
+    dica.hidden = false;
+  }
+  const erroBox = pop.querySelector('.form-erro');
+
+  pop.querySelector('[data-cancelar]').addEventListener('click', () => { fecharPop(); alvo.focus(); });
+  pop.addEventListener('keydown', (e) => { if (e.key === 'Escape') { fecharPop(); alvo.focus(); } });
+  pop.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    erroBox.hidden = true;
+    const botao = pop.querySelector('[type=submit]');
+    botao.disabled = true;
+    try {
+      const novo = await api('/api/admin/config', { metodo: 'PUT', dados: { valores: { [chave]: input.value } }, semToast: true });
+      atualizarPagina(novo);
+      fecharPop();
+      toast('Salvo. Já aparece em todas as páginas do site.');
+    } catch (err) {
+      if (err instanceof ErroApi && err.status === 401) return;
+      erroBox.textContent = err.message;
+      erroBox.hidden = false;
+      input.focus();
+    } finally {
+      if (botao.isConnected) botao.disabled = false;
+    }
+  });
+
+  document.body.append(pop);
+  // No celular o CSS transforma o balão numa folha fixa embaixo; no desktop ele fica junto do texto.
+  if (matchMedia('(min-width: 621px)').matches) {
+    const r = alvo.getBoundingClientRect();
+    const largura = pop.offsetWidth;
+    const altura = pop.offsetHeight;
+    const cabeAbaixo = r.bottom + 8 + altura < innerHeight - 72;
+    pop.style.left = Math.max(12, Math.min(r.left, innerWidth - largura - 12)) + 'px';
+    pop.style.top = (cabeAbaixo ? r.bottom + 8 : Math.max(12, r.top - altura - 8)) + 'px';
+  }
+  input.focus();
+  input.select();
+}
+
+function ligarEdicaoNoLugar() {
+  const editaveis = document.querySelectorAll('[data-cfg], [data-cfg-href]');
+  editaveis.forEach((el) => {
+    const campo = estado.campos[chaveDe(el)];
+    if (!campo) return;
+    el.classList.add('cfg-editavel');
+    el.tabIndex = 0;
+    el.title = `Editar: ${campo.rotulo}`;
+  });
+
+  // Captura: no modo edição, clicar num dado editável edita em vez de abrir o link.
+  document.addEventListener('click', (e) => {
+    const alvo = e.target.closest('.cfg-editavel');
+    if (alvo) {
+      e.preventDefault();
+      e.stopPropagation();
+      abrirPop(alvo);
+    } else if (pop && !pop.contains(e.target)) {
+      fecharPop();
+    }
+  }, true);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.classList?.contains('cfg-editavel')) {
+      e.preventDefault();
+      abrirPop(e.target);
+    }
+  });
+}
+
+// ---------- Início ----------
+
+document.body.insertAdjacentHTML('afterbegin', SPRITE);
+const { usuario } = await api('/api/auth/me');
+if (usuario.papel === 'admin') {
+  estado = await api('/api/admin/config');
+  ligarEdicaoNoLugar();
+}
+montarBarra(usuario);

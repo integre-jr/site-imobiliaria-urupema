@@ -2,16 +2,38 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ Em transformação: leia a especificação antes de mexer
+
+Desde 16/11/2026 o site está virando **plataforma**: admin com login, cadastro de imóveis com fotos,
+feed VRSync para OLX/ZAP/Viva Real, publicação no Instagram e leads, tudo na Cloudflare grátis
+(Pages + Functions + D1 + KV), sem cartão. **A especificação completa, com decisões, banco, rotas,
+telas e a ordem de implementação (marcos M1–M10), está em
+[docs/ESPECIFICACAO-PLATAFORMA.md](docs/ESPECIFICACAO-PLATAFORMA.md).** Marco **M1 concluído em
+16/11/2026** (estrutura, D1/KV, 1º deploy). **M2 (autenticação e usuários) concluído e no ar em
+16/11/2026** (testes: `bash scripts/testa-auth.sh`, instruções no topo do script). **Em 17/11/2026 o
+painel virou o próprio site editável** (spec 8.0/8.2, marco M2b): não existe mais "tela de admin"
+separada, só login/setup + o site em `/admin` com barra de edição e gavetas. As seções
+abaixo descrevem o site público, que por enquanto segue igual ao estático original, agora dentro
+de `public/`.
+
 ## O que é este projeto
 
 Site institucional da **Urupema Negócios Imobiliários** — imobiliária de Urupema/SC (Serra Catarinense). Site estático de marketing, multi-página, em **pt-BR**. Estética "Clean & Premium".
 
-**Stack:** HTML + CSS + JavaScript puro (vanilla). **Não há** build system, framework, bundler, `package.json`, dependências npm nem testes. Nada para compilar ou instalar.
+**Stack:** HTML + CSS + JavaScript puro (vanilla), servido pelo **Cloudflare Pages** (projeto `urupema-imoveis`), com Pages Functions, D1 e KV. Sem framework, bundler nem testes. Única dependência: `wrangler` (devDependency).
 
 ## Como rodar / visualizar
 
-- **Abrir direto:** basta abrir qualquer `.html` no navegador (`file://`). Funciona sem servidor — tudo foi projetado para isso (por isso não há includes de servidor; ver abaixo).
-- **Servir estático (opcional):** `python -m http.server` na raiz e acessar `http://localhost:8000`.
+- **Local (completo):** `npm install`, `npm run db:local` (migrações + seed no D1 local) e `npm run dev` → `http://localhost:8788`. O Pages redireciona `/sobre.html` → `/sobre` (normal).
+  - O `.dev.vars` (fora do Git) traz os segredos locais; `SETUP_TOKEN=dev-setup` cria o 1º admin em `/admin/setup`.
+  - **Windows:** parar o `pages dev` nem sempre mata o `workerd`. Um servidor órfão continua na porta 8788 servindo **sem as Functions** (a API devolve HTML). Antes de subir de novo, conferir com `netstat -ano | grep 8788` e encerrar os processos `wrangler pages dev`/`workerd` que sobraram.
+- **Abrir direto (`file://`)** ainda funciona para olhar o visual estático de `public/*.html`, sem API.
+- **Senha esquecida do administrador:** ver [docs/RECUPERAR-SENHA.md](docs/RECUPERAR-SENHA.md) (`scripts/hash-senha.mjs`).
+- **Publicar:** conferir `npx wrangler whoami` (conta "Urupema Negócios Imobiliários") e rodar `npm run deploy` → `https://urupema-imoveis.pages.dev`. Migrações remotas: `npm run db:remoto`.
+  - A conta fica fixada em `CLOUDFLARE_ACCOUNT_ID` no `.env` (ignorado pelo Git): o Pages recusa `account_id` no `wrangler.toml`. Recriar o `.env` numa máquina nova.
+  - O projeto foi criado no Pages **clássico** (`pages project create --force`), porque o wrangler 4.16x tenta migrar Pages para Workers. Não passar `--force` de novo; os comandos seguintes já vão direto ao Pages.
+  - O D1 não aceita `SELECT ... UNION ALL` com muitos termos nas migrações: usar `INSERT ... VALUES` linha a linha.
+- **Conferência visual:** preferir o agent-browser (skill) em 1440 e 390 px.
 - **Screenshot / conferência visual** (Chrome headless, Windows PowerShell):
   ```powershell
   & "C:\Program Files\Google\Chrome\Application\chrome.exe" --headless=new --disable-gpu --hide-scrollbars --window-size=1440,4600 --user-data-dir="<pasta-temp>" "--screenshot=<saida>.png" "file:///c:/Users/guiha/Desktop/Site%20Imobili%C3%A1ria%20Urupema/index.html"
@@ -23,11 +45,31 @@ Site institucional da **Urupema Negócios Imobiliários** — imobiliária de Ur
 ## Arquitetura
 
 ```
-index.html  sobre.html  financie.html  negocie.html  contato.html   ← as 5 páginas
-css/styles.css   ← TODO o estilo (design system + componentes), um arquivo só
-js/main.js       ← TODO o comportamento, um IIFE só
-imagens/         ← logos + favicon
+public/                  ← tudo que é servido estático (pages_build_output_dir)
+  index.html  sobre.html  financie.html  negocie.html  contato.html   ← as 5 páginas
+  css/styles.css         ← TODO o estilo (design system + componentes), um arquivo só
+  js/main.js             ← TODO o comportamento, um IIFE só
+  imagens/               ← logos + favicon
+  _routes.json           ← css/js/imagens não invocam Functions (economiza cota)
+  admin/login.html setup.html ← as ÚNICAS páginas próprias do painel
+  css/admin.css          ← modo edição (barra, contornos, balão, gavetas) + login; mesmos tokens
+  js/admin/              ← editor.js (entrada: barra + edição no lugar; novos botões entram em montarBarra),
+                           gaveta.js, api.js (fetch + toasts + forms), uma gaveta por módulo (usuarios, conta, dados)
+functions/
+  _middleware.js         ← site público: aplica os dados editáveis (data-cfg) no HTML; tira ETag
+  admin/_middleware.js   ← /admin/<página> = página pública em modo edição (links reescritos, editor injetado); sem sessão → login
+  api/admin/config.js    ← GET|PUT dos dados editáveis (só admin); campos, validação e links em lib/config.js
+  api/_middleware.js     ← erro inesperado → 500 genérico; api/[[rota]].js → 404 JSON
+  api/auth/*             ← setup, login, logout ({todos:true} = todos os aparelhos), me, senha
+  api/admin/_middleware.js ← sessão (401) + header X-Urupema (CSRF); context.data.usuario
+  api/admin/usuarios/*   ← CRUD de usuários (só admin; ninguém tira o próprio acesso)
+lib/                     ← db.js, http.js, html.js, validacao.js, auth.js (PBKDF2, sessão, força bruta, CSRF, soAdmin), config.js
+migrations/              ← 0001 esquema, 0002 seed, 0003 sessoes.dias, 0004 endereço em 2 chaves (endereco_1/_2)
+scripts/hash-senha.mjs   ← redefine a senha de um usuário direto no D1
+wrangler.toml  package.json  .env/.dev.vars (fora do Git)
 ```
+
+Nas seções abaixo, caminhos como `css/styles.css` e `index.html` são relativos a `public/`.
 
 Cada página é autossuficiente: importa apenas `css/styles.css` e `js/main.js`.
 
@@ -81,7 +123,7 @@ IIFE único, sem dependências. Cada bloco é ativado pela presença dos element
 ## Fatos do negócio (conteúdo real vs. placeholder)
 
 - **Reais:** endereço **Rua Artur Pagani, 08 — Sala 01, Centro, Urupema/SC, 88625-000**; telefones **(49) 99160-3030** e **(49) 99107-5332**; WhatsApp usa `https://wa.me/5549991603030`.
-- **Placeholder (a substituir quando houver dado real):** todos os **imóveis** da vitrine (fotos, preços, códigos `UR-XXXX`) são fictícios; o **e-mail** `contato@urupemaimoveis.com.br` é fictício; Instagram/Facebook apontam para as home genéricas; os **formulários não enviam nada** (mock).
+- **Placeholder (a substituir quando houver dado real):** todos os **imóveis** da vitrine (fotos, preços, códigos `UR-XXXX`) são fictícios; o **e-mail** `contato@urupemaimoveis.com.br` é fictício; Instagram/Facebook apontam para as home genéricas (o dono troca tudo isso no painel, em "Dados do site"); os **formulários não enviam nada** (mock, até o M4).
 
 ## Assets de imagem (`imagens/`)
 
@@ -94,9 +136,21 @@ Os recortes `_icon`/`_trim` foram gerados a partir do original via script PowerS
 
 **Fotos de imóveis/serra:** URLs do Unsplash (`images.unsplash.com/photo-...`) — dependem de internet, mas o fallback da marca cobre falhas. Ao trocar por fotos reais, coloque-as em `imagens/` e atualize o `src`.
 
+### Dados editáveis (`data-cfg`)
+
+Telefones, WhatsApp, e-mail, endereço, links das redes e os 3 números da home vêm da tabela
+`configuracoes`. No HTML eles estão marcados, e o valor escrito no arquivo é só o padrão (vale sem a Function):
+- `data-cfg="chave"` → o servidor troca o **texto**; no modo edição, o elemento fica editável no lugar.
+- `data-cfg-href="chave"` → o servidor troca o **link** (`tel:+55…`, `https://wa.me/…`, `mailto:`, URL), conforme o tipo em `lib/config.js`.
+- `data-cfg-mapa` → `src` do mapa do Google gerado do endereço (só em `contato.html`).
+
+**Ao colocar um telefone, link de WhatsApp/rede, e-mail ou endereço novo em qualquer página, marque-o.**
+Sem a marcação, ele não muda quando o dono edita. Chave nova = acrescentar em `CAMPOS` (`lib/config.js`) + migração com o valor inicial.
+
 ## Ao modificar — checklist rápido
 
 - Mudou header/footer/menu/contato/sprite? → replicar nas **5 páginas**.
+- Dado de contato/rede/endereço novo numa página? → marcar com `data-cfg`/`data-cfg-href` (ver acima).
 - Novo ícone numa página? → garantir o `<symbol>` no sprite **daquela** página.
 - Cor/espaçamento/sombra? → usar variável de `:root`, não valor cru.
 - Novo card de imóvel? → incluir `data-type`, `.card-media__fallback`, `.card-fav[data-ref]` único.
@@ -104,7 +158,7 @@ Os recortes `_icon`/`_trim` foram gerados a partir do original via script PowerS
 - Conferir sempre em **desktop e mobile** (o layout muda bastante em 620px).
 
 ## Tipo de projeto
-- Tipo: Landing page / institucional — registrado em 11/09/2026
+- Tipo: SaaS / plataforma (site público + admin com imóveis, feed para portais, Instagram e leads) — reclassificado em 16/11/2026 (antes: Landing page / institucional, 11/09/2026)
 - Arquivos de código: 7 (medido em 11/09/2026)
-- Usar: agent-browser (conferir desktop e mobile); grill-me só se chegar pedido novo e vago
-- Não usar: code-review-graph (projeto pequeno), ponytail (já é HTML/CSS/JS puro e o visual é o produto), Spec Kit (o escopo sai do layout), Scrapling (nenhum dado externo)
+- Usar: Spec Kit (nas funcionalidades novas: admin, feed XML, Instagram; bug e ajuste pulam); agent-browser (desktop, mobile, login do admin e formulários); ponytail só no admin e nas funções de servidor, nunca na vitrine
+- Não usar: code-review-graph (projeto pequeno; reavaliar se passar de ~100 arquivos de código), Scrapling (nenhum dado externo a raspar)

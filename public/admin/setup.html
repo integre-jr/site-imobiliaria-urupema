@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#1E3A2B">
+  <title>Primeiro acesso · Painel Urupema</title>
+  <link rel="icon" href="/imagens/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin admin--auth">
+  <main class="auth">
+    <div class="adm-card">
+      <div class="adm-marca">
+        <img src="/imagens/logo_urupema_icon.png" alt="">
+        <div><strong>Urupema</strong><span>Painel</span></div>
+      </div>
+      <h1>Primeiro acesso</h1>
+      <p>Crie a conta do administrador. Esta página só funciona uma vez.</p>
+      <form id="form-setup" class="adm-form">
+        <div class="form-erro" role="alert" hidden></div>
+        <div class="form-field">
+          <label for="token">Código de configuração</label>
+          <input class="input" id="token" name="token" type="password" autocomplete="off" required>
+          <span class="hint">Fornecido por quem instalou o sistema.</span>
+        </div>
+        <div class="form-field">
+          <label for="nome">Seu nome</label>
+          <input class="input" id="nome" name="nome" autocomplete="name" maxlength="100" required>
+        </div>
+        <div class="form-field">
+          <label for="email">E-mail</label>
+          <input class="input" id="email" name="email" type="email" autocomplete="username" required>
+        </div>
+        <div class="form-field">
+          <label for="senha">Senha</label>
+          <input class="input" id="senha" name="senha" type="password" autocomplete="new-password" minlength="8" required>
+          <span class="hint">Pelo menos 8 caracteres.</span>
+        </div>
+        <div class="form-field">
+          <label for="confirmar">Confirme a senha</label>
+          <input class="input" id="confirmar" name="confirmar" type="password" autocomplete="new-password" minlength="8" required>
+        </div>
+        <button class="btn btn--primary btn--block" type="submit">Criar conta e entrar</button>
+      </form>
+    </div>
+  </main>
+  <script type="module" src="/js/admin/setup.js"></script>
+</body>
+</html>

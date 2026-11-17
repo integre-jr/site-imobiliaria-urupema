@@ -1,0 +1,274 @@
+/* ============================================================
+   URUPEMA — Painel (modo edição)
+   O painel é o próprio site em /admin. Este arquivo só é carregado
+   no login, no primeiro acesso e nas páginas servidas em /admin.
+   Usa os tokens de :root e os componentes de styles.css
+   (.btn, .form-field, .input, .select).
+   ============================================================ */
+
+/* ============================================================
+   1. MODO EDIÇÃO SOBRE O SITE
+   ============================================================ */
+html[data-admin] body { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+html[data-admin] .wa-float { display: none; }          /* a barra ocupa o rodapé da tela */
+html.gaveta-aberta { overflow: hidden; }
+body.admin [hidden], html[data-admin] [hidden] { display: none !important; }
+
+/* Dados editáveis: contorno pontilhado dourado sempre visível */
+.cfg-editavel {
+  outline: 1.5px dashed var(--gold);
+  outline-offset: 3px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: outline-color .2s var(--ease), background .2s var(--ease);
+}
+.cfg-editavel:hover, .cfg-editavel:focus-visible {
+  outline: 2px solid var(--gold);
+  background: rgba(198,163,78,.14);
+}
+
+/* Balão de edição: junto do texto no desktop, folha fixa embaixo no celular */
+.cfg-pop {
+  position: fixed;
+  z-index: 310;
+  width: min(380px, calc(100vw - 24px));
+  padding: 18px;
+  gap: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  font-family: var(--font-body);
+  text-align: left;
+}
+.cfg-pop__rotulo { font-family: var(--font-display); font-weight: 700; color: var(--forest); font-size: .95rem; }
+@media (max-width: 620px) {
+  .cfg-pop {
+    left: 8px !important; right: 8px; top: auto !important;
+    bottom: calc(84px + env(safe-area-inset-bottom));
+    width: auto;
+  }
+}
+
+/* ---------- Barra de edição ---------- */
+.barra-edicao {
+  position: fixed;
+  z-index: 150;                 /* acima do header (100) e do botão de WhatsApp (90); abaixo do menu mobile (200) */
+  left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px clamp(12px, 3vw, 28px) calc(10px + env(safe-area-inset-bottom));
+  background: var(--forest-900);
+  color: #fff;
+  box-shadow: 0 -6px 24px rgba(22,40,30,.25);
+  font-family: var(--font-display);
+}
+.barra-edicao__status { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.barra-edicao__selo {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  background: var(--gold);
+  color: var(--forest-900);
+  font-weight: 700;
+  font-size: .82rem;
+  white-space: nowrap;
+}
+.barra-edicao__selo svg { width: 15px; height: 15px; }
+.barra-edicao__quem { font-size: .85rem; color: rgba(255,255,255,.75); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.barra-edicao__acoes { display: flex; gap: 4px; margin-left: auto; overflow-x: auto; scrollbar-width: none; }
+.barra-edicao__acoes::-webkit-scrollbar { display: none; }
+.barra-edicao__botao {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--r-pill);
+  color: #fff;
+  font-weight: 600;
+  font-size: .9rem;
+  white-space: nowrap;
+  transition: background .2s var(--ease);
+}
+.barra-edicao__botao:hover, .barra-edicao__botao:focus-visible { background: rgba(255,255,255,.12); }
+.barra-edicao__botao svg { width: 18px; height: 18px; }
+
+@media (max-width: 860px) {
+  /* Celular: só o selo em cima e os botões em ícones com legenda pequena */
+  .barra-edicao { flex-direction: column; align-items: stretch; gap: 6px; padding-top: 8px; }
+  .barra-edicao__status { justify-content: space-between; }
+  .barra-edicao__acoes { margin-left: 0; justify-content: space-around; }
+  .barra-edicao__botao { flex-direction: column; gap: 3px; padding: 6px 8px; font-size: .7rem; border-radius: var(--r-sm); }
+  .barra-edicao__botao svg { width: 20px; height: 20px; }
+  html[data-admin] body { padding-bottom: calc(118px + env(safe-area-inset-bottom)); }
+  .cfg-pop { bottom: calc(126px + env(safe-area-inset-bottom)); }
+}
+
+/* ---------- Gaveta (painel lateral por cima do site) ---------- */
+.gaveta { position: fixed; inset: 0; z-index: 300; }
+.gaveta__fundo { position: absolute; inset: 0; background: rgba(22,40,30,.45); animation: fadeIn .2s var(--ease); }
+.gaveta__painel {
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: min(520px, 100vw);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  box-shadow: var(--shadow-lg);
+  animation: gavetaEntra .25s var(--ease);
+}
+.gaveta__topo {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 18px 22px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.gaveta__topo h2 { font-size: 1.3rem; }
+.gaveta__fechar {
+  width: 40px; height: 40px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--r-pill);
+  color: var(--forest);
+}
+.gaveta__fechar:hover { background: var(--line-soft); }
+.gaveta__fechar svg { width: 22px; height: 22px; }
+.gaveta__corpo { flex: 1; overflow-y: auto; padding: 22px; display: flex; flex-direction: column; gap: 16px; align-items: stretch; }
+.gaveta__corpo > .btn { align-self: flex-start; }
+.gaveta__corpo h3 { font-size: 1.05rem; }
+.gaveta__intro { color: var(--muted); font-size: .92rem; }
+.gaveta__divisao { border: 0; border-top: 1px solid var(--line); margin: 8px 0; }
+@keyframes gavetaEntra { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.adm-grupo { display: flex; flex-direction: column; gap: 14px; padding: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); }
+.adm-grupo legend { float: left; width: 100%; font-family: var(--font-display); font-weight: 700; color: var(--forest); margin-bottom: 2px; }
+
+/* ============================================================
+   2. COMPONENTES (cards, listas, etiquetas, formulários)
+   ============================================================ */
+.adm-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: clamp(18px, 3vw, 28px);
+  box-shadow: var(--shadow-xs);
+}
+.adm-card > p { color: var(--muted); font-size: .92rem; margin-bottom: 18px; }
+
+.adm-marca { display: flex; align-items: center; gap: 10px; }
+.adm-marca img { width: 44px; height: auto; }
+.adm-marca strong { display: block; font-family: var(--font-display); color: var(--forest); line-height: 1.1; }
+.adm-marca span { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+
+.adm-lista { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 4px 18px; }
+.adm-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line-soft);
+}
+.adm-item:first-child { border-top: 0; }
+.adm-item__info { flex: 1 1 220px; min-width: 0; }
+.adm-item__info strong { font-family: var(--font-display); color: var(--forest); }
+.adm-item__info small { display: block; color: var(--muted); font-size: .86rem; overflow-wrap: anywhere; }
+.adm-item__acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.adm-item.is-inativo .adm-item__info { opacity: .6; }
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-display);
+  font-size: .74rem;
+  font-weight: 700;
+  background: var(--line-soft);
+  color: var(--ink-soft);
+  vertical-align: middle;
+  margin-left: 6px;
+}
+.tag--admin { background: var(--gold-soft); color: var(--gold-700); }
+.tag--ok { background: var(--moss-soft); color: var(--moss-600); }
+.tag--off { background: var(--danger-soft); color: var(--danger); }
+
+.btn--perigo { border-color: var(--line); color: var(--danger); background: var(--surface); }
+.btn--perigo:hover { border-color: var(--danger); background: var(--danger); color: #fff; }
+
+.adm-form { display: flex; flex-direction: column; gap: 16px; }
+.check { display: flex; align-items: center; gap: 10px; font-size: .95rem; cursor: pointer; }
+.check input { width: 20px; height: 20px; accent-color: var(--forest); flex-shrink: 0; }
+.form-erro {
+  padding: 12px 14px;
+  border-radius: var(--r-sm);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: .92rem;
+  font-weight: 500;
+}
+.input.is-invalido, .select.is-invalido { border-color: var(--danger); }
+.adm-form__acoes { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+
+/* ============================================================
+   3. DIÁLOGOS E AVISOS (toast)
+   ============================================================ */
+.adm-dialog {
+  width: min(520px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  margin: auto;
+  border: 0;
+  border-radius: var(--r-lg);
+  padding: clamp(20px, 4vw, 30px);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-lg);
+}
+.adm-dialog::backdrop { background: rgba(22,40,30,.45); }
+.adm-dialog h2 { font-size: 1.25rem; margin-bottom: 16px; }
+
+.toasts {
+  position: fixed;
+  z-index: 400;
+  left: 50%;
+  bottom: calc(92px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(440px, calc(100vw - 24px));
+}
+@media (max-width: 860px) { html[data-admin] .toasts { bottom: calc(132px + env(safe-area-inset-bottom)); } }
+body.admin--auth .toasts { bottom: 24px; }
+.toast {
+  padding: 13px 16px;
+  border-radius: var(--r-sm);
+  background: var(--forest);
+  color: #fff;
+  box-shadow: var(--shadow-md);
+  font-size: .93rem;
+  animation: fadeUp .3s var(--ease);
+}
+.toast--erro { background: var(--danger); }
+
+/* ============================================================
+   4. LOGIN E PRIMEIRO ACESSO
+   ============================================================ */
+body.admin--auth {
+  min-height: 100dvh;
+  padding: 24px 16px;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(160deg, rgba(22,40,30,.78), rgba(22,40,30,.55)),
+    url("https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1800&q=70") center / cover no-repeat,
+    var(--forest-900);
+}
+.auth { width: min(420px, 100%); }
+.auth .adm-marca { justify-content: center; padding-bottom: 18px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+.auth .adm-marca img { width: 56px; }
+.auth .adm-card { box-shadow: var(--shadow-lg); border: 0; }
+.auth h1 { font-size: 1.45rem; margin-bottom: 4px; }
+.auth .adm-card > p { margin-bottom: 20px; }
+.auth__rodape { text-align: center; margin-top: 18px; font-size: .88rem; color: rgba(255,255,255,.8); }
+.auth__rodape a { color: #fff; font-weight: 600; }

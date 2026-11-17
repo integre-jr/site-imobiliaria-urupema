@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#1E3A2B">
+  <title>Entrar · Painel Urupema</title>
+  <link rel="icon" href="/imagens/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin admin--auth">
+  <main class="auth">
+    <div class="adm-card">
+      <div class="adm-marca">
+        <img src="/imagens/logo_urupema_icon.png" alt="">
+        <div><strong>Urupema</strong><span>Painel</span></div>
+      </div>
+      <h1>Entrar</h1>
+      <p>Acesse o painel da imobiliária.</p>
+      <form id="form-login" class="adm-form">
+        <div class="form-erro" role="alert" hidden></div>
+        <div class="form-field">
+          <label for="email">E-mail</label>
+          <input class="input" id="email" name="email" type="email" autocomplete="username" required>
+        </div>
+        <div class="form-field">
+          <label for="senha">Senha</label>
+          <input class="input" id="senha" name="senha" type="password" autocomplete="current-password" required>
+        </div>
+        <label class="check"><input type="checkbox" name="manter"> Manter conectado neste aparelho</label>
+        <button class="btn btn--primary btn--block" type="submit">Entrar</button>
+      </form>
+    </div>
+    <p class="auth__rodape">Esqueceu a senha? Peça ao administrador para redefinir.</p>
+    <p class="auth__rodape"><a href="/">← Voltar ao site</a></p>
+  </main>
+  <script type="module" src="/js/admin/login.js"></script>
+</body>
+</html>
