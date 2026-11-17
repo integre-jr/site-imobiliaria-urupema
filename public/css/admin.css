@@ -92,13 +92,17 @@ body.admin [hidden], html[data-admin] [hidden] { display: none !important; }
 }
 .barra-edicao__botao:hover, .barra-edicao__botao:focus-visible { background: rgba(255,255,255,.12); }
 .barra-edicao__botao svg { width: 18px; height: 18px; }
+.barra-edicao__botao .rotulo-curto { display: none; }
+@media (max-width: 1200px) and (min-width: 861px) { .barra-edicao__quem { display: none; } }
 
 @media (max-width: 860px) {
   /* Celular: só o selo em cima e os botões em ícones com legenda pequena */
   .barra-edicao { flex-direction: column; align-items: stretch; gap: 6px; padding-top: 8px; }
   .barra-edicao__status { justify-content: space-between; }
-  .barra-edicao__acoes { margin-left: 0; justify-content: space-around; }
-  .barra-edicao__botao { flex-direction: column; gap: 3px; padding: 6px 8px; font-size: .7rem; border-radius: var(--r-sm); }
+  .barra-edicao__acoes { margin-left: 0; }
+  .barra-edicao__botao { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 3px; padding: 6px 2px; font-size: .7rem; border-radius: var(--r-sm); }
+  .barra-edicao__botao .rotulo-longo { display: none; }
+  .barra-edicao__botao .rotulo-curto { display: inline; }
   .barra-edicao__botao svg { width: 20px; height: 20px; }
   html[data-admin] body { padding-bottom: calc(118px + env(safe-area-inset-bottom)); }
   .cfg-pop { bottom: calc(126px + env(safe-area-inset-bottom)); }
@@ -139,6 +143,27 @@ body.admin [hidden], html[data-admin] [hidden] { display: none !important; }
 .gaveta__divisao { border: 0; border-top: 1px solid var(--line); margin: 8px 0; }
 @keyframes gavetaEntra { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---------- Gaveta Instagram ---------- */
+.ig-demo { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: .9rem; color: var(--muted); }
+.ig-demo .tag { margin-left: 0; }
+.ig-status {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--muted-2);
+  border-radius: var(--r-lg);
+}
+.ig-status.is-ok { border-left-color: var(--moss); }
+.ig-status strong { font-family: var(--font-display); color: var(--forest); font-size: 1.05rem; }
+.ig-status p { color: var(--muted); font-size: .92rem; }
+.ig-status .adm-form__acoes { justify-content: flex-start; margin-top: 6px; }
+.ig-passos { padding: 18px; background: var(--gold-soft); border-radius: var(--r-lg); }
+.ig-passos h3 { margin-bottom: 10px; }
+.ig-passos ol { list-style: decimal; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: .92rem; }
+.ig-passos .hint { margin-top: 10px; }
+.hint.is-alerta { color: var(--danger); font-weight: 600; }
 
 .adm-grupo { display: flex; flex-direction: column; gap: 14px; padding: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); }
 .adm-grupo legend { float: left; width: 100%; font-family: var(--font-display); font-weight: 700; color: var(--forest); margin-bottom: 2px; }

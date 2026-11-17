@@ -118,6 +118,34 @@ confere "painel mostra o mesmo dado" '>(49) 98888-1111</a>' "$(curl -s -b "$JA" 
 req PUT /api/admin/config "$JA" '{"valores":{"contato.telefone_1":"(49) 99160-3030","contato.whatsapp":"5549991603030","redes.instagram":"https://instagram.com","home.stat_1_n":"+15"}}' > /dev/null
 confere "valores originais restaurados" '"redes.instagram":"https://instagram.com"' "$(req GET /api/admin/config "$JA")"
 
+echo "Instagram (modo demonstração)"
+JK="$D/jar-caio.txt"
+req POST /api/admin/usuarios "$JA" '{"nome":"Caio Corretor","email":"caio@teste.com","papel":"corretor","senha":"senha-caio-1"}' > /dev/null
+req POST /api/auth/login "$JK" '{"email":"caio@teste.com","senha":"senha-caio-1"}' > /dev/null
+confere "status começa desconectado" '"modo":"mock","app_configurado":true,"conectado":false' "$(req GET /api/admin/instagram/status "$JA")"
+confere "corretor vê o status sem poder gerenciar" '"pode_gerenciar":false' "$(req GET /api/admin/instagram/status "$JK")"
+confere "corretor não conecta" "403" "$(req GET /api/admin/instagram/conectar "$JK")"
+confere "sem sessão não conecta" "401" "$(req GET /api/admin/instagram/conectar)"
+LOC=$(curl -s -o /dev/null -w '%{redirect_url}' -b "$JA" -c "$JA" $B/api/admin/instagram/conectar)
+confere "conectar leva ao callback com state" "$B/api/instagram/callback?code=mock&state=" "$LOC"
+confere "state guardado em cookie __Host" "__Host-urupema_ig_state" "$(cat "$JA")"
+confere "callback sem sessão de admin falha" "?instagram=erro" "$(curl -s -o /dev/null -w '%{redirect_url}' "$LOC")"
+confere "callback com state trocado falha" "?instagram=erro" "$(curl -s -o /dev/null -w '%{redirect_url}' -b "$JA" "${LOC%state=*}state=falso")"
+LOC=$(curl -s -o /dev/null -w '%{redirect_url}' -b "$JA" -c "$JA" $B/api/admin/instagram/conectar)
+confere "callback certo conecta" "$B/admin/?instagram=conectado" "$(curl -s -o /dev/null -w '%{redirect_url}' -b "$JA" -c "$JA" "$LOC")"
+confere "o state não vale de novo" "?instagram=erro" "$(curl -s -o /dev/null -w '%{redirect_url}' -b "$JA" "$LOC")"
+ST=$(req GET /api/admin/instagram/status "$JA")
+confere "status conectado como @urupema_demo" '"conectado":true,"expirado":false,"conta":"@urupema_demo"' "$ST"
+confere "cancelar no Instagram volta avisando" "?instagram=cancelado" "$(curl -s -o /dev/null -w '%{redirect_url}' -b "$JA" "$B/api/instagram/callback?error=access_denied")"
+CRIPTO=$(cd "$RAIZ" && npx wrangler d1 execute urupema --local --json --command "SELECT dados_cripto FROM integracoes WHERE nome='instagram'" 2>/dev/null)
+confere "token guardado criptografado (sem 'mock_' legível)" "0" "$(grep -c 'mock_' <<< "$CRIPTO")"
+confere "corretor não desconecta" "403" "$(req POST /api/admin/instagram/desconectar "$JK")"
+confere "legenda: hashtags podem ficar vazias" "200" "$(req PUT /api/admin/config "$JA" '{"valores":{"instagram.hashtags":""}}')"
+confere "legenda: modelo vazio dá 400" '"campo":"instagram.modelo_legenda"' "$(req PUT /api/admin/config "$JA" '{"valores":{"instagram.modelo_legenda":" "}}')"
+req PUT /api/admin/config "$JA" '{"valores":{"instagram.hashtags":"#urupema #serracatarinense #imoveis #imoveisserragaucha #casanaserra #imobiliaria"}}' > /dev/null
+confere "admin desconecta" "200" "$(req POST /api/admin/instagram/desconectar "$JA")"
+confere "status volta a desconectado" '"conectado":false' "$(req GET /api/admin/instagram/status "$JA")"
+
 echo "Logout"
 cp "$JA" "$D/jar-admin-2.txt"
 confere "logout" "200" "$(req POST /api/auth/logout "$JA")"

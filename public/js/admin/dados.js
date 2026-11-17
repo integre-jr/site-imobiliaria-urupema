@@ -17,7 +17,8 @@ export function abrirDados(estado, aoSalvar) {
   form.innerHTML = '<div class="form-erro" role="alert" hidden></div>';
 
   const grupos = {};
-  for (const [chave, campo] of Object.entries(estado.campos)) {
+  const meus = Object.entries(estado.campos).filter(([, campo]) => !campo.gaveta);
+  for (const [chave, campo] of meus) {
     if (!grupos[campo.grupo]) {
       const fs = document.createElement('fieldset');
       fs.className = 'adm-grupo';
@@ -59,7 +60,7 @@ export function abrirDados(estado, aoSalvar) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const valores = {};
-    for (const chave of Object.keys(estado.campos)) valores[chave] = form.elements[chave].value;
+    for (const [chave] of meus) valores[chave] = form.elements[chave].value;
     const novo = await enviar(form, '/api/admin/config', { metodo: 'PUT', dados: { valores } });
     if (novo) {
       aoSalvar(novo);

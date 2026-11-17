@@ -4,6 +4,7 @@
 import { api, ErroApi, toast, valorParaCampo } from './api.js';
 import { abrirConta } from './conta.js';
 import { abrirDados } from './dados.js';
+import { abrirInstagram } from './instagram.js';
 import { abrirUsuarios } from './usuarios.js';
 
 const SPRITE = `<svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -13,6 +14,7 @@ const SPRITE = `<svg width="0" height="0" style="position:absolute" aria-hidden=
 <symbol id="adm-conta" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
 <symbol id="adm-externo" viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
 <symbol id="adm-sair" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
+<symbol id="adm-instagram" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><path d="M17.5 6.5h.01"/></symbol>
 <symbol id="adm-fechar" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
 </svg>`;
 
@@ -22,12 +24,15 @@ let estado = null;   // { valores, hrefs, mapa, campos } (só do administrador)
 
 // ---------- Barra de edição ----------
 
-function botaoBarra(icone, rotulo, aoClicar) {
+// curto: rótulo usado no celular, onde os botões dividem a largura da tela
+function botaoBarra(icone, rotulo, aoClicar, curto = rotulo) {
   const b = document.createElement('button');
   b.type = 'button';
   b.className = 'barra-edicao__botao';
-  b.innerHTML = `<svg aria-hidden="true"><use href="#${icone}"/></svg><span></span>`;
-  b.querySelector('span').textContent = rotulo;
+  b.setAttribute('aria-label', rotulo);
+  b.innerHTML = `<svg aria-hidden="true"><use href="#${icone}"/></svg><span class="rotulo-longo"></span><span class="rotulo-curto"></span>`;
+  b.querySelector('.rotulo-longo').textContent = rotulo;
+  b.querySelector('.rotulo-curto').textContent = curto;
   b.addEventListener('click', aoClicar);
   return b;
 }
@@ -47,16 +52,17 @@ function montarBarra(usuario) {
   const acoes = barra.querySelector('.barra-edicao__acoes');
   const minhaConta = () => abrirConta(usuario);
   if (usuario.papel === 'admin') {
-    acoes.append(
-      botaoBarra('adm-dados', 'Dados do site', () => abrirDados(estado, atualizarPagina)),
-      botaoBarra('adm-usuarios', 'Usuários', () => abrirUsuarios(minhaConta)),
-    );
+    acoes.append(botaoBarra('adm-dados', 'Dados do site', () => abrirDados(estado, atualizarPagina), 'Dados'));
+  }
+  acoes.append(botaoBarra('adm-instagram', 'Instagram', () => abrirInstagram(usuario, estado, atualizarPagina)));
+  if (usuario.papel === 'admin') {
+    acoes.append(botaoBarra('adm-usuarios', 'Usuários', () => abrirUsuarios(minhaConta)));
   }
   acoes.append(
-    botaoBarra('adm-conta', 'Minha conta', minhaConta),
+    botaoBarra('adm-conta', 'Minha conta', minhaConta, 'Conta'),
     botaoBarra('adm-externo', 'Ver site', () => {
       window.open(location.pathname.replace(/^\/admin/, '') || '/', '_blank', 'noopener');
-    }),
+    }, 'Site'),
     botaoBarra('adm-sair', 'Sair', async () => {
       await api('/api/auth/logout', { metodo: 'POST' }).catch(() => {});
       location.href = '/admin/login';
@@ -196,3 +202,17 @@ if (usuario.papel === 'admin') {
   ligarEdicaoNoLugar();
 }
 montarBarra(usuario);
+
+// Volta do login do Instagram: /admin/?instagram=conectado|cancelado|erro
+const retornoIg = new URLSearchParams(location.search).get('instagram');
+if (retornoIg) {
+  history.replaceState(null, '', location.pathname);
+  const avisos = {
+    conectado: ['Instagram conectado.', 'ok'],
+    cancelado: ['Conexão com o Instagram cancelada.', 'ok'],
+    erro: ['Não foi possível conectar o Instagram. Tente de novo; se continuar, fale com a INTEGRE.', 'erro'],
+  };
+  const [msg, tipo] = avisos[retornoIg] || avisos.erro;
+  toast(msg, tipo);
+  abrirInstagram(usuario, estado, atualizarPagina);
+}

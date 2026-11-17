@@ -29,6 +29,7 @@ Site institucional da **Urupema Negócios Imobiliários** — imobiliária de Ur
   - **Windows:** parar o `pages dev` nem sempre mata o `workerd`. Um servidor órfão continua na porta 8788 servindo **sem as Functions** (a API devolve HTML). Antes de subir de novo, conferir com `netstat -ano | grep 8788` e encerrar os processos `wrangler pages dev`/`workerd` que sobraram.
 - **Abrir direto (`file://`)** ainda funciona para olhar o visual estático de `public/*.html`, sem API.
 - **Senha esquecida do administrador:** ver [docs/RECUPERAR-SENHA.md](docs/RECUPERAR-SENHA.md) (`scripts/hash-senha.mjs`).
+- **Instagram:** roda em modo demonstração (`INSTAGRAM_MODO = "mock"`). Para ligar a conta real (app da Meta + convite de testador), ver [docs/INSTAGRAM.md](docs/INSTAGRAM.md).
 - **Publicar:** conferir `npx wrangler whoami` (conta "Urupema Negócios Imobiliários") e rodar `npm run deploy` → `https://urupema-imoveis.pages.dev`. Migrações remotas: `npm run db:remoto`.
   - A conta fica fixada em `CLOUDFLARE_ACCOUNT_ID` no `.env` (ignorado pelo Git): o Pages recusa `account_id` no `wrangler.toml`. Recriar o `.env` numa máquina nova.
   - O projeto foi criado no Pages **clássico** (`pages project create --force`), porque o wrangler 4.16x tenta migrar Pages para Workers. Não passar `--force` de novo; os comandos seguintes já vão direto ao Pages.
@@ -59,11 +60,14 @@ functions/
   _middleware.js         ← site público: aplica os dados editáveis (data-cfg) no HTML; tira ETag
   admin/_middleware.js   ← /admin/<página> = página pública em modo edição (links reescritos, editor injetado); sem sessão → login
   api/admin/config.js    ← GET|PUT dos dados editáveis (só admin); campos, validação e links em lib/config.js
+  api/admin/instagram/*  ← status, conectar (navegação → login do Instagram), desconectar; o _middleware renova o token
+  api/instagram/callback.js ← volta do OAuth (sessão de admin + state em cookie) → /admin/?instagram=…
   api/_middleware.js     ← erro inesperado → 500 genérico; api/[[rota]].js → 404 JSON
   api/auth/*             ← setup, login, logout ({todos:true} = todos os aparelhos), me, senha
   api/admin/_middleware.js ← sessão (401) + header X-Urupema (CSRF); context.data.usuario
   api/admin/usuarios/*   ← CRUD de usuários (só admin; ninguém tira o próprio acesso)
-lib/                     ← db.js, http.js, html.js, validacao.js, auth.js (PBKDF2, sessão, força bruta, CSRF, soAdmin), config.js
+lib/                     ← db.js, http.js, html.js, validacao.js, auth.js (PBKDF2, sessão, força bruta, CSRF, soAdmin), config.js,
+                           cripto.js (base64, AES-GCM com TOKEN_KEY), instagram/ (index = interface; mock.js | real.js por INSTAGRAM_MODO)
 migrations/              ← 0001 esquema, 0002 seed, 0003 sessoes.dias, 0004 endereço em 2 chaves (endereco_1/_2)
 scripts/hash-senha.mjs   ← redefine a senha de um usuário direto no D1
 wrangler.toml  package.json  .env/.dev.vars (fora do Git)

@@ -556,7 +556,17 @@ Cód. {ref} — mais fotos e detalhes no link da bio.
 `{preco}`: "R$ 850.000" ou "R$ 2.800/mês" (os dois se for venda_aluguel). `{specs}`: só o que existir,
 por exemplo "🛏 3 quartos · 🚿 2 banheiros · 🚗 2 vagas · 📐 180 m²". Linhas que ficarem vazias somem.
 
-### 9.4 real.js: Instagram API com login do Instagram (sem página do Facebook) [CONFERIR tudo na doc atual]
+**Implementado em 17/11/2026 (antes do M3): a parte de conexão.** `lib/cripto.js`, `lib/instagram/{index,mock,real}.js`
+(`conectarUrl`, `trocarCodigo`, `renovar`), `GET /api/admin/instagram/status|conectar`,
+`POST /api/admin/instagram/desconectar`, `GET /api/instagram/callback`, a gaveta "Instagram" (conexão + modelo
+de legenda e hashtags) e o passo a passo em `docs/INSTAGRAM.md`. Falta no M6: `publicar`, `limiteUso`, mídias
+temporárias, modal de pré-visualização, publicar ao salvar, repostar e histórico (dependem dos imóveis).
+
+**Decisão de 17/11/2026: convite de testador, sem análise da Meta.** O app fica em modo de desenvolvimento e a
+conta da imobiliária entra como Instagram Tester (acesso padrão basta para contas adicionadas ao app). Reavaliar
+a análise perto do M9, se quiserem tirar do cliente o passo de aceitar o convite.
+
+### 9.4 real.js: Instagram API com login do Instagram (sem página do Facebook) [endpoints conferidos em 17/11/2026]
 - **Pré-requisitos (no dia da conexão real):** conta do Instagram **profissional** (Comercial ou
   Criador de conteúdo); app na Meta (portfólio da INTEGRE) com o produto "Instagram API with
   Instagram Login"; permissões `instagram_business_basic` e `instagram_business_content_publish`;
@@ -740,7 +750,7 @@ site, listagem, detalhe, formulários e o fluxo completo do admin.
 | M3 | **Imóveis**: API pública, CRUD no modo edição (8.2), fotos (KV), vitrine da home, `imoveis.html`, `/imovel/:ref` (e `/admin/imovel/:ref` editável), refatoração do main.js | Cadastrar pelo celular com fotos → aparece na home, na listagem e no detalhe; filtros e favoritos funcionam |
 | M4 | **Leads + LGPD**: names nos forms, `/api/leads`, gaveta de leads, CSV, privacidade.html, "criar imóvel a partir do lead" | Os 3 formulários + "tenho interesse" chegam ao admin |
 | M5 | **Portais**: feed VRSync, validação/pendências, gaveta Portais, importação de feed | Feed abre no navegador com XML válido; pendências aparecem; importação funciona com um XML de exemplo |
-| M6 | **Instagram (mock)**: interface, mock, midias temp, modal, publicar ao salvar, repostar, histórico, gaveta Instagram | Demo completa: cadastrar → "publicar no Instagram" → post simulado no histórico; repostar imóvel antigo |
+| M6 | **Instagram (mock)**: ~~interface, conexão, gaveta Instagram~~ (feito em 17/11) + midias temp, modal, publicar ao salvar, repostar, histórico | Demo completa: cadastrar → "publicar no Instagram" → post simulado no histórico; repostar imóvel antigo |
 | M7 | ~~Conteúdo editável~~: **adiantado para o M2b** | (feito) |
 | M8 | **Polimento**: Painel com alertas, sitemap/robots, 404, revisão mobile, atualizar `CLAUDE.md` | **Versão de demonstração para o cliente** |
 | M9 | **Instagram real** (`real.js`), quando houver a conta do cliente | Post real publicado na conta conectada |
