@@ -6,7 +6,7 @@
 import { comHeaders, lerSessao } from '../../lib/auth.js';
 import { aplicarConfig, lerConfig } from '../../lib/config.js';
 import { um } from '../../lib/db.js';
-import { paginaImovel } from '../../lib/pagina-imovel.js';
+import { pagina404, paginaImovel } from '../../lib/pagina-imovel.js';
 
 const PAGINAS_DO_SITE = new Set(['index', 'imoveis', 'sobre', 'financie', 'negocie', 'contato', 'privacidade']);
 // O painel nunca pode ser aberto dentro de outro site (clickjacking: um clique "escondido" publicaria ou excluiria algo).
@@ -16,7 +16,8 @@ const SEM_CACHE = {
 };
 
 const redirecionar = (url, caminho) => new Response(null, { status: 302, headers: { Location: new URL(caminho, url).href } });
-const naoEncontrado = () => new Response('Página não encontrada.', { status: 404, headers: SEM_CACHE });
+// Mesma página 404 do site (links absolutos), com os cabeçalhos do painel.
+const naoEncontrado = async (env, request) => comHeaders(await pagina404(env, request), null, SEM_CACHE);
 
 // Link do site → link equivalente no painel. null = deixar como está.
 function linkNoPainel(valor) {
@@ -39,7 +40,7 @@ export async function onRequest({ request, env, next }) {
 
   if (pagina === 'setup') {
     const { n } = await um(env.DB, 'SELECT count(*) AS n FROM usuarios');
-    return n > 0 ? naoEncontrado() : comHeaders(await next(), null, SEM_CACHE);
+    return n > 0 ? await naoEncontrado(env, request) : comHeaders(await next(), null, SEM_CACHE);
   }
 
   const s = await lerSessao(env, request);
@@ -56,7 +57,7 @@ export async function onRequest({ request, env, next }) {
   } else if (PAGINAS_DO_SITE.has(pagina)) {
     original = await env.ASSETS.fetch(new URL(pagina === 'index' ? '/' : '/' + pagina, url));
   }
-  if (!original?.ok) return naoEncontrado();
+  if (!original?.ok) return await naoEncontrado(env, request);
 
   const reescrever = (atributo) => ({
     element(el) {

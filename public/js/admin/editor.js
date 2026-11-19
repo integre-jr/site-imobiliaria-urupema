@@ -7,7 +7,7 @@ import { abrirConta } from './conta.js';
 import { abrirDados } from './dados.js';
 import { enviarImagemSite, prepararImagem } from './imagens.js';
 import { abrirInstagram } from './instagram.js';
-import { abrirLeads, atualizarContador } from './leads.js';
+import { abrirLeads } from './leads.js';
 import { abrirPortais } from './portais.js';
 import { abrirPostInstagram } from './postar.js';
 import { abrirUsuarios } from './usuarios.js';
@@ -356,6 +356,58 @@ function decorarCards(escopo) {
   });
 }
 
+// ---------- Resumo e alertas (M8) ----------
+// Ao entrar no painel: aviso discreto acima da barra. Fechar esconde até aparecer um alerta diferente
+// (guardado só nesta aba do navegador).
+const VISTOS = 'urupema:alertas-vistos';
+const lerVistos = () => { try { return JSON.parse(sessionStorage.getItem(VISTOS)) || []; } catch { return []; } };
+
+async function mostrarAlertas(usuario) {
+  let r;
+  try { r = await api('/api/admin/resumo', { semToast: true }); } catch { return; }
+  document.dispatchEvent(new CustomEvent('urupema:leads-novos', { detail: r.leads_novos }));
+  const chave = (a) => a.id + ':' + a.texto;
+  const vistos = lerVistos();
+  const lista = r.alertas.filter((a) => !vistos.includes(chave(a)));
+  if (!lista.length) return;
+
+  const acoes = {
+    leads: ['Ver leads', () => abrirLeads(usuario, estado)],
+    instagram: ['Abrir Instagram', () => abrirInstagram(usuario, estado, atualizarPagina)],
+    portais: ['Abrir Portais', () => abrirPortais()],
+    dados: ['Dados do site', () => abrirDados(estado, atualizarPagina)],
+    anuncios: ['Ver anúncios', () => abrirAnuncios()],
+  };
+  const caixa = document.createElement('aside');
+  caixa.className = 'alertas';
+  caixa.setAttribute('aria-label', 'Avisos do painel');
+  caixa.innerHTML = '<div class="alertas__topo"><strong>Avisos</strong><button type="button" class="alertas__fechar" aria-label="Fechar avisos"><svg aria-hidden="true"><use href="#adm-fechar"/></svg></button></div><ul></ul>';
+  const ul = caixa.querySelector('ul');
+  for (const a of lista) {
+    const li = document.createElement('li');
+    li.className = 'alertas__item alertas__item--' + a.nivel;
+    const t = document.createElement('span');
+    t.textContent = a.texto;
+    li.append(t);
+    const acao = acoes[a.acao];
+    if (acao) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'alertas__acao';
+      b.textContent = acao[0];
+      b.addEventListener('click', () => { fechar(); acao[1](); });
+      li.append(b);
+    }
+    ul.append(li);
+  }
+  function fechar() {
+    try { sessionStorage.setItem(VISTOS, JSON.stringify([...vistos, ...lista.map(chave)])); } catch { /* modo privado */ }
+    caixa.remove();
+  }
+  caixa.querySelector('.alertas__fechar').addEventListener('click', fechar);
+  document.body.append(caixa);
+}
+
 // ---------- Início ----------
 
 document.body.insertAdjacentHTML('afterbegin', SPRITE);
@@ -367,7 +419,7 @@ if (usuario.papel === 'admin') {
 }
 montarBarra(usuario);
 ligarAnuncios();
-atualizarContador();
+mostrarAlertas(usuario);
 
 // Volta do login do Instagram: /admin/?instagram=conectado|cancelado|erro
 const retornoIg = new URLSearchParams(location.search).get('instagram');

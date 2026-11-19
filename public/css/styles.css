@@ -1542,6 +1542,11 @@ h1, h2, h3, h4, h5,
 }
 
 @media (max-width: 400px) {
+  /* Cabeçalho em 390 px: a marca + favoritos + menu passavam 10 px da tela (rolagem lateral) */
+  .header-inner { gap: 8px; }
+  .brand { gap: 8px; }
+  .brand__icon { height: 32px; }
+  .brand__tag { letter-spacing: .1em; }
   .hero__stats .hero__stat .n { font-size: 1.6rem; }
 }
 
@@ -1672,4 +1677,10 @@ h1, h2, h3, h4, h5,
   .filtros { grid-template-columns: 1fr 1fr; }
   .filtros__acoes { grid-column: 1 / -1; }
   .filtros__acoes .btn--primary { flex: 1; }
+}
+
+@media (max-width: 370px) {
+  .brand__icon { height: 28px; }
+  .brand__name { font-size: .98rem; }
+  .brand__tag { font-size: .52rem; }
 }

@@ -18,9 +18,12 @@ separada, só login/setup + o site em `/admin` com barra de edição e gavetas. 
 M6 (posts no Instagram, com o `real.js` do M9 já pronto) feitos em 18/11/2026**: o cliente só cola o link do
 feed no Canal Pro e, para o Instagram real, a INTEGRE cola o ID/chave do app da Meta na gaveta Instagram e o
 dono clica em "Conectar" (testes: `bash scripts/testa-integracoes.sh`; precisa de `npm run db:local` por causa
-da migração 0005). As seções
-abaixo descrevem o site público, que por enquanto segue igual ao estático original, agora dentro
-de `public/`.
+da migração 0005). **Em 19/11/2026: M4 (leads + LGPD), login endurecido e M8 (alertas, sitemap/robots,
+404, revisão mobile)**: os formulários gravam leads (gaveta "Leads", CSV, `privacidade.html`), senha mínima de
+12 sem senhas óbvias, bloqueio também por conta, e avisos ao entrar no painel (testes: `testa-leads.sh`,
+`testa-polimento.sh`; todos os scripts aceitam `B=http://localhost:<porta>` e usam o admin local
+`admin@teste.com` / `painel-teste-admin-1`, criado pelo `testa-auth.sh`). As seções abaixo descrevem o site
+público, agora dentro de `public/`.
 
 ## O que é este projeto
 
@@ -61,7 +64,9 @@ public/                  ← tudo que é servido estático (pages_build_output_d
   _routes.json           ← css/js/imagens não invocam Functions (economiza cota)
   imoveis.html           ← listagem com filtros (gerada a partir da index; mesmos blocos compartilhados)
   modelos/imovel.html    ← modelo da página do imóvel (o servidor preenche; /modelos/* dá 404 ao público)
-  404.html               ← página de erro (links absolutos: é servida em qualquer endereço)
+  404.html               ← página de erro (links absolutos: é servida em qualquer endereço, também em /admin/<inexistente>)
+  privacidade.html       ← política de privacidade (LGPD, retenção de 2 anos); link no rodapé de todas as páginas
+  _headers               ← cabeçalhos de segurança dos estáticos (o painel define os seus no middleware)
   js/imoveis.js          ← cards vindos da API (mesmo markup dos estáticos), busca, listagem, galeria
   admin/login.html setup.html ← as ÚNICAS páginas próprias do painel
   css/admin.css          ← modo edição (barra, contornos, balão, gavetas) + login; mesmos tokens
@@ -75,6 +80,10 @@ functions/
   api/admin/instagram/*  ← status, conectar (navegação → login do Instagram), desconectar, app (ID/chave do app da Meta → modo real),
                            previa, midias (D1, 24 h), publicar + concluir (2 etapas), posts; o _middleware carrega o app e renova o token
   feeds/[arquivo].js     ← /feeds/grupo-olx-<token>.xml (VRSync; token no banco; anúncios seed nunca entram)
+  api/leads.js           ← formulários do site → leads (X-Urupema, campo-isca "website", t ≥ 3 s, 10/IP/hora; fotos do Negocie no KV lead/<id>/<n>.jpg)
+  api/admin/leads/*      ← lista/filtros, :id GET|PUT|DELETE (DELETE só admin: exclusão LGPD), :id/fotos/:foto, exportar (CSV ; com BOM)
+  api/admin/resumo.js    ← alertas ao entrar no painel (leads novos; admin: Instagram, armazenamento, feed, e-mail/anúncios de demonstração)
+  sitemap.xml.js robots.txt.js ← gerados com o domínio da requisição
   api/admin/portais.js   ← gaveta Portais (link, pendências, leituras); api/admin/importar/{buscar,foto}.js (feed antigo)
   api/instagram/callback.js ← volta do OAuth (sessão de admin + state em cookie) → /admin/?instagram=…
   api/imoveis/*          ← lista pública com filtros, opcoes (vocabulários), um imóvel
@@ -141,14 +150,14 @@ IIFE único, sem dependências. Cada bloco é ativado pela presença dos element
 - **Fallback de imagem:** `img` dentro de `.card-media` / `.split__media` / `.hero__bg` que der erro faz o container ganhar `.is-fallback` (mostra o placeholder da marca em vez da imagem quebrada). Sempre inclua o `<div class="card-media__fallback">` ao criar um card.
 - **Reveal on scroll:** elementos `.reveal` ganham `.is-in` via IntersectionObserver; use `data-delay="1".."5"` para escalonar. **Gate `.js`:** o CSS só esconde `.reveal` quando `<html class="js">` (setado pelo script inline no `<head>`), então **sem JS todo o conteúdo aparece normalmente** — não remova esse script inline.
 - **Wizard (Financie):** `#wizard` com painéis `.wizard__panel` (um `.is-active`), indicadores `.wstep`, botões `[data-next]` / `[data-prev]`, form `#wizardForm`, sucesso `#wizardSuccess`. Valida `[required]` do painel antes de avançar.
-- **Forms genéricos:** qualquer `<form data-mock>` valida os `[required]`, esconde o form e mostra o `.form-success` irmão. **São só front-end (mock), não há backend nem envio real.**
+- **Formulários → leads:** `<form data-lead="contato|negocie|financie|interesse_imovel">` valida os `[required]` (inclusive o checkbox `consentimento`, LGPD), envia para `/api/leads` (Negocie em multipart, com as fotos reduzidas a 1600 px) e mostra o `.form-success` irmão (no wizard, `#wizardSuccess`). Todo campo precisa de `name` listado em `CAMPOS_LEAD` (`lib/leads.js`), senão é ignorado. Erro → `.form-error` com link do WhatsApp.
 - **Dropzone:** `.dropzone` clicável abre o `input[type=file]`; conta arquivos em `.dropzone__count`.
 - **Ano do rodapé:** `.js-year`.
 
 ## Fatos do negócio (conteúdo real vs. placeholder)
 
 - **Reais:** endereço **Rua Artur Pagani, 08 — Sala 01, Centro, Urupema/SC, 88625-000**; telefones **(49) 99160-3030** e **(49) 99107-5332**; WhatsApp usa `https://wa.me/5549991603030`.
-- **Placeholder (a substituir quando houver dado real):** todos os **imóveis** da vitrine (fotos, preços, códigos `UR-XXXX`) são fictícios; o **e-mail** `contato@urupemaimoveis.com.br` é fictício; Instagram/Facebook apontam para as home genéricas (o dono troca tudo isso no painel, em "Dados do site"); os **formulários não enviam nada** (mock, até o M4).
+- **Placeholder (a substituir quando houver dado real):** todos os **imóveis** da vitrine (fotos, preços, códigos `UR-XXXX`) são fictícios; o **e-mail** `contato@urupemaimoveis.com.br` é fictício; Instagram/Facebook apontam para as home genéricas (o dono troca tudo isso no painel, em "Dados do site"); os formulários gravam leads de verdade desde o M4 (o aviso por e-mail só funciona depois do domínio na Cloudflare, no M10).
 
 ## Assets de imagem (`imagens/`)
 

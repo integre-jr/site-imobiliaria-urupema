@@ -543,3 +543,23 @@ html[data-admin] :is(.footer__social, .social-row) { gap: 20px; }
   .lead-dados { grid-template-columns: 1fr; gap: 2px; }
   .lead-dados dd { margin-bottom: 8px; }
 }
+
+/* ---------- Avisos ao entrar no painel (M8) ---------- */
+.alertas {
+  position: fixed; right: 16px; bottom: calc(var(--barra-h, 72px) + 12px); z-index: 250;
+  width: min(420px, calc(100vw - 32px)); max-height: 50vh; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-lg);
+  padding: 14px 16px; font-size: .9rem; animation: fadeUp .3s var(--ease);
+}
+.alertas__topo { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.alertas__topo strong { font-family: var(--font-display); color: var(--forest); }
+.alertas__fechar { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; color: var(--muted); }
+.alertas__fechar:hover { background: var(--bg-2); color: var(--ink); }
+.alertas__fechar svg { width: 16px; height: 16px; }
+.alertas ul { display: flex; flex-direction: column; gap: 8px; }
+.alertas__item { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px 12px; border-radius: var(--r-sm); background: var(--bg-2); border-left: 3px solid var(--moss); color: var(--ink-soft); line-height: 1.45; }
+.alertas__item--aviso { border-left-color: var(--gold); background: var(--gold-soft); }
+.alertas__item--erro { border-left-color: var(--danger); background: var(--danger-soft); }
+.alertas__acao { font-weight: 600; color: var(--forest); text-decoration: underline; font-size: .86rem; }
+html.gaveta-aberta .alertas { display: none; }
+@media (max-width: 860px) { .alertas { right: 12px; left: 12px; width: auto; max-height: 40vh; } }
