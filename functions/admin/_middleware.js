@@ -8,7 +8,7 @@ import { aplicarConfig, lerConfig } from '../../lib/config.js';
 import { um } from '../../lib/db.js';
 import { paginaImovel } from '../../lib/pagina-imovel.js';
 
-const PAGINAS_DO_SITE = new Set(['index', 'imoveis', 'sobre', 'financie', 'negocie', 'contato']);
+const PAGINAS_DO_SITE = new Set(['index', 'imoveis', 'sobre', 'financie', 'negocie', 'contato', 'privacidade']);
 const SEM_CACHE = { 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' };
 
 const redirecionar = (url, caminho) => new Response(null, { status: 302, headers: { Location: new URL(caminho, url).href } });

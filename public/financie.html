@@ -179,7 +179,7 @@
             </div>
           </div>
 
-          <form id="wizardForm">
+          <form id="wizardForm" data-lead="financie" novalidate>
             <div class="wizard__body">
               <!-- Step 1 -->
               <div class="wizard__panel is-active">
@@ -191,19 +191,19 @@
                   <div class="grid-fields">
                     <div class="form-field col-span-2">
                       <label>Nome completo <span class="req">*</span></label>
-                      <input class="input" type="text" placeholder="Seu nome" required>
+                      <input class="input" type="text" name="nome" autocomplete="name" maxlength="100" placeholder="Seu nome" required>
                     </div>
                     <div class="form-field">
                       <label>CPF <span class="req">*</span></label>
-                      <input class="input" type="text" inputmode="numeric" placeholder="000.000.000-00" required>
+                      <input class="input" type="text" name="cpf" maxlength="20" inputmode="numeric" placeholder="000.000.000-00" required>
                     </div>
                     <div class="form-field">
                       <label>Data de nascimento <span class="req">*</span></label>
-                      <input class="input" type="date" required>
+                      <input class="input" type="date" name="nascimento" required>
                     </div>
                     <div class="form-field">
                       <label>Estado civil</label>
-                      <select class="select">
+                      <select class="select" name="estado_civil">
                         <option value="">Selecione</option>
                         <option>Solteiro(a)</option>
                         <option>Casado(a)</option>
@@ -214,7 +214,7 @@
                     </div>
                     <div class="form-field">
                       <label>Possui FGTS?</label>
-                      <select class="select">
+                      <select class="select" name="fgts">
                         <option value="">Selecione</option>
                         <option>Sim</option>
                         <option>Não</option>
@@ -238,20 +238,20 @@
                   <div class="grid-fields">
                     <div class="form-field">
                       <label>Renda familiar mensal <span class="req">*</span></label>
-                      <input class="input" type="text" inputmode="numeric" placeholder="R$ 0,00" required>
+                      <input class="input" type="text" name="renda" maxlength="40" inputmode="numeric" placeholder="R$ 0,00" required>
                     </div>
                     <div class="form-field">
                       <label>Valor do imóvel <span class="req">*</span></label>
-                      <input class="input" type="text" inputmode="numeric" placeholder="R$ 0,00" required>
+                      <input class="input" type="text" name="valor" maxlength="40" inputmode="numeric" placeholder="R$ 0,00" required>
                     </div>
                     <div class="form-field">
                       <label>Valor de entrada</label>
-                      <input class="input" type="text" inputmode="numeric" placeholder="R$ 0,00">
+                      <input class="input" type="text" name="entrada" maxlength="40" inputmode="numeric" placeholder="R$ 0,00">
                       <span class="hint">Quanto maior a entrada, menores as parcelas.</span>
                     </div>
                     <div class="form-field">
                       <label>Prazo desejado</label>
-                      <select class="select">
+                      <select class="select" name="prazo">
                         <option value="">Selecione</option>
                         <option>Até 120 meses</option>
                         <option>Até 240 meses</option>
@@ -261,7 +261,7 @@
                     </div>
                     <div class="form-field col-span-2">
                       <label>Tipo de imóvel</label>
-                      <select class="select">
+                      <select class="select" name="tipo_imovel">
                         <option value="">Selecione</option>
                         <option>Residencial — novo</option>
                         <option>Residencial — usado</option>
@@ -288,19 +288,19 @@
                   <div class="grid-fields">
                     <div class="form-field">
                       <label>E-mail <span class="req">*</span></label>
-                      <input class="input" type="email" placeholder="voce@email.com" required>
+                      <input class="input" type="email" name="email" autocomplete="email" placeholder="voce@email.com" required>
                     </div>
                     <div class="form-field">
                       <label>Telefone / WhatsApp <span class="req">*</span></label>
-                      <input class="input" type="tel" placeholder="(49) 90000-0000" required>
+                      <input class="input" type="tel" name="telefone" autocomplete="tel" placeholder="(49) 90000-0000" required>
                     </div>
                     <div class="form-field">
                       <label>Cidade <span class="req">*</span></label>
-                      <input class="input" type="text" placeholder="Urupema / SC" required>
+                      <input class="input" type="text" name="cidade" maxlength="80" placeholder="Urupema / SC" required>
                     </div>
                     <div class="form-field">
                       <label>Melhor horário para contato</label>
-                      <select class="select">
+                      <select class="select" name="horario">
                         <option value="">Selecione</option>
                         <option>Manhã</option>
                         <option>Tarde</option>
@@ -309,9 +309,11 @@
                     </div>
                     <div class="form-field col-span-2">
                       <label>Observações</label>
-                      <textarea class="textarea" placeholder="Conte-nos mais sobre o imóvel que procura..."></textarea>
+                      <textarea class="textarea" name="observacoes" maxlength="3000" placeholder="Conte-nos mais sobre o imóvel que procura..."></textarea>
                     </div>
                   </div>
+                  <label class="consent"><input type="checkbox" name="consentimento" required> <span>Concordo com a <a href="privacidade.html" target="_blank">Política de Privacidade</a> e autorizo o contato da Urupema. <span class="req">*</span></span></label>
+
                 </div>
                 <div class="wizard__nav">
                   <button type="button" class="btn btn--outline" data-prev><svg><use href="#i-arrow-left"/></svg> Voltar</button>
@@ -451,7 +453,7 @@
     </div>
     <div class="footer__bottom">
       <p>© <span class="js-year">2026</span> Urupema Negócios Imobiliários — Todos os direitos reservados.</p>
-      <span class="creci">CRECI/SC · Marca registrada</span>
+      <span class="footer__legal"><a href="privacidade.html">Política de privacidade</a> · <span class="creci">CRECI/SC · Marca registrada</span></span>
     </div>
   </div>
 </footer>

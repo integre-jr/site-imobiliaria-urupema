@@ -174,6 +174,36 @@
           <a class="btn btn--ghost btn--block" href="/financie.html">Simular financiamento</a>
           <p class="imovel-contato__ref">Código do imóvel: <strong data-campo="ref">UR-0000</strong></p>
         </div>
+        <div class="imovel-contato__card imovel-interesse">
+          <strong>Tenho interesse</strong>
+          <p>Deixe seu contato e a Urupema retorna para você.</p>
+          <form data-lead="interesse_imovel" novalidate>
+            <input type="hidden" name="imovel_ref">
+            <div class="form-field">
+              <label for="int-nome">Nome <span class="req">*</span></label>
+              <input class="input" id="int-nome" type="text" name="nome" autocomplete="name" maxlength="100" required>
+            </div>
+            <div class="form-field">
+              <label for="int-tel">Telefone / WhatsApp <span class="req">*</span></label>
+              <input class="input" id="int-tel" type="tel" name="telefone" autocomplete="tel" placeholder="(49) 90000-0000" required>
+            </div>
+            <div class="form-field">
+              <label for="int-email">E-mail</label>
+              <input class="input" id="int-email" type="email" name="email" autocomplete="email" placeholder="voce@email.com">
+            </div>
+            <div class="form-field">
+              <label for="int-msg">Mensagem</label>
+              <textarea class="textarea" id="int-msg" name="mensagem" rows="3" maxlength="3000" placeholder="Quero agendar uma visita..."></textarea>
+            </div>
+            <label class="consent"><input type="checkbox" name="consentimento" required> <span>Concordo com a <a href="/privacidade.html" target="_blank">Política de Privacidade</a> e autorizo o contato da Urupema. <span class="req">*</span></span></label>
+            <div class="form-actions"><button class="btn btn--primary btn--block" type="submit">Enviar</button></div>
+          </form>
+          <div class="form-success">
+            <div class="form-success__icon"><svg><use href="#i-check"/></svg></div>
+            <h3>Recebemos o seu contato!</h3>
+            <p>A equipe da Urupema retorna em breve pelo telefone informado.</p>
+          </div>
+        </div>
       </aside>
     </div>
   </section>
@@ -234,7 +264,7 @@
     </div>
     <div class="footer__bottom">
       <p>© <span class="js-year">2026</span> Urupema Negócios Imobiliários — Todos os direitos reservados.</p>
-      <span class="creci">CRECI/SC · Marca registrada</span>
+      <span class="footer__legal"><a href="/privacidade.html">Política de privacidade</a> · <span class="creci">CRECI/SC · Marca registrada</span></span>
     </div>
   </div>
 </footer>

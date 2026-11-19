@@ -142,61 +142,143 @@
       wizard.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
-    const validateStep = (i) => {
-      const panel = panels[i];
-      let ok = true;
-      $$('[required]', panel).forEach(field => {
-        if (!field.value.trim()) {
-          field.style.borderColor = '#D1495B';
-          ok = false;
-        } else {
-          field.style.borderColor = '';
-        }
-      });
-      return ok;
-    };
-
     $$('[data-next]', wizard).forEach(btn => {
       btn.addEventListener('click', () => {
-        if (!validateStep(current)) return;
+        if (!validateFields(panels[current])) return;
         if (current < panels.length - 1) showStep(current + 1);
       });
     });
     $$('[data-prev]', wizard).forEach(btn => {
       btn.addEventListener('click', () => { if (current > 0) showStep(current - 1); });
     });
-
-    const wForm = $('#wizardForm');
-    wForm && wForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      if (!validateStep(current)) return;
-      wizard.querySelector('.wizard__body')?.style && (wizard.querySelector('.wizard__body').style.display = 'none');
-      $('.wizard__steps', wizard)?.style && ($('.wizard__steps', wizard).style.display = 'none');
-      const success = $('#wizardSuccess');
-      if (success) success.classList.add('is-visible');
-    });
   }
 
-  /* ---------- Generic form submit (fake success) ---------- */
-  $$('form[data-mock]').forEach(form => {
-    form.addEventListener('submit', (e) => {
+  /* ---------- Formulários → leads (POST /api/leads) ----------
+     form[data-lead="contato|negocie|financie|interesse_imovel"]. Campos com name; checkbox
+     "consentimento" obrigatório (LGPD). Sucesso → mostra o .form-success irmão (ou #wizardSuccess). */
+  function validateFields(scope) {
+    let first = null;
+    $$('[required]', scope).forEach(field => {
+      const empty = field.type === 'checkbox' ? !field.checked : !field.value.trim();
+      const bad = empty || (field.type === 'email' && field.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(field.value.trim()));
+      const target = field.type === 'checkbox' ? field.closest('label') || field : field;
+      target.classList.toggle('is-invalid', bad);
+      if (bad && !first) first = field;
+    });
+    if (first) first.focus();
+    return !first;
+  }
+  document.addEventListener('input', (e) => {
+    const f = e.target;
+    if (f.matches?.('[required]')) (f.type === 'checkbox' ? f.closest('label') || f : f).classList.remove('is-invalid');
+  });
+
+  const openedAt = Date.now();
+  const whatsappLink = () => $('[data-cfg-href="contato.whatsapp"]')?.href || 'https://wa.me/5549991603030';
+
+  // Fotos do Negocie: reduz no navegador (lado maior 1600 px, JPEG) antes de enviar.
+  const MAX_LEAD_PHOTOS = 5;
+  async function shrinkPhoto(file) {
+    const bmp = await createImageBitmap(file);
+    const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bmp.width * k);
+    canvas.height = Math.round(bmp.height * k);
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff';                       // PNG transparente: fundo branco no JPEG
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    bmp.close?.();
+    for (const q of [0.82, 0.7, 0.55]) {
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', q));
+      if (blob && blob.size <= 1.9 * 1024 * 1024) return blob;
+    }
+    throw new Error('Foto grande demais.');
+  }
+
+  function showFormError(form, msg) {
+    let box = $('.form-error', form);
+    if (!box) {
+      box = document.createElement('div');
+      box.className = 'form-error';
+      box.setAttribute('role', 'alert');
+      (form.querySelector('.form-actions, .wizard__nav:last-of-type') || form.lastElementChild).before(box);
+    }
+    box.replaceChildren(msg + ' ');
+    const a = document.createElement('a');
+    a.href = whatsappLink();
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.textContent = 'Se preferir, fale com a gente pelo WhatsApp.';
+    box.append(a);
+    box.hidden = false;
+  }
+
+  function showSuccess(form) {
+    const wiz = form.closest('#wizard');
+    if (wiz) {
+      $('.wizard__body', wiz) && ($('.wizard__body', wiz).style.display = 'none');
+      $('.wizard__steps', wiz) && ($('.wizard__steps', wiz).style.display = 'none');
+      $('#wizardSuccess')?.classList.add('is-visible');
+      return;
+    }
+    const success = $('.form-success', form.parentElement) || $('.form-success', form.closest('.form-card, section') || document);
+    form.style.display = 'none';
+    success?.classList.add('is-visible');
+    success?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  $$('form[data-lead]').forEach(form => {
+    // Campo-isca: invisível para pessoas; robôs costumam preencher.
+    const trap = document.createElement('input');
+    trap.type = 'text'; trap.name = 'website'; trap.tabIndex = -1; trap.autocomplete = 'off';
+    trap.className = 'hp-field'; trap.setAttribute('aria-hidden', 'true');
+    form.prepend(trap);
+    const refInput = $('input[name="imovel_ref"]', form);
+    if (refInput) refInput.value = $('main[data-imovel-ref]')?.dataset.imovelRef || '';
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      let ok = true;
-      $$('[required]', form).forEach(field => {
-        if (!field.value.trim()) { field.style.borderColor = '#D1495B'; ok = false; }
-        else field.style.borderColor = '';
-      });
-      if (!ok) {
-        form.querySelector('[required]:invalid, [required]')?.focus();
-        return;
-      }
-      const card = form.closest('.form-card') || form;
-      const success = card.querySelector('.form-success');
-      if (success) {
-        form.style.display = 'none';
-        success.classList.add('is-visible');
-      } else {
-        form.reset();
+      if (!validateFields(form)) return;
+      const btn = $('[type=submit]', form);
+      const label = btn?.innerHTML;
+      if (btn) { btn.disabled = true; btn.textContent = 'Enviando…'; }
+      $('.form-error', form)?.setAttribute('hidden', '');
+      try {
+        const data = {};
+        for (const el of form.elements) {
+          if (!el.name || el.type === 'file' || ((el.type === 'radio') && !el.checked)) continue;
+          data[el.name] = el.type === 'checkbox' ? el.checked : el.value;
+        }
+        data.origem = form.dataset.lead;
+        data.t = Date.now() - openedAt;
+        const fileInput = $('input[type="file"][name="fotos"]', form);
+        const files = fileInput ? [...fileInput.files].filter(f => f.type.startsWith('image/')).slice(0, MAX_LEAD_PHOTOS) : [];
+        let body;
+        const headers = { 'X-Urupema': '1' };
+        if (files.length) {
+          body = new FormData();
+          Object.entries(data).forEach(([k, v]) => body.append(k, String(v)));
+          for (const f of files) {
+            try { body.append('fotos', await shrinkPhoto(f), 'foto.jpg'); } catch { /* formato não suportado: segue sem ela */ }
+          }
+        } else {
+          headers['Content-Type'] = 'application/json';
+          body = JSON.stringify(data);
+        }
+        const res = await fetch('/api/leads', { method: 'POST', headers, body });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          showFormError(form, out.erro || 'Não foi possível enviar agora.');
+          const field = out.campo && form.elements[out.campo];
+          if (field && field.classList) { field.classList.add('is-invalid'); field.focus(); }
+          return;
+        }
+        showSuccess(form);
+      } catch {
+        showFormError(form, 'Sem conexão no momento. Confira a internet e tente de novo.');
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = label; }
       }
     });
   });
@@ -208,7 +290,8 @@
     dz.addEventListener('click', () => input && input.click());
     input && input.addEventListener('change', () => {
       const n = input.files.length;
-      if (label) label.textContent = n ? `${n} arquivo(s) selecionado(s)` : '';
+      const max = input.name === 'fotos' ? MAX_LEAD_PHOTOS : Infinity;
+      if (label) label.textContent = !n ? '' : n > max ? `${n} fotos escolhidas: serão enviadas as ${max} primeiras` : `${n} foto(s) selecionada(s)`;
     });
   });
 

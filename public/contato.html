@@ -182,23 +182,23 @@
               <h2 style="font-size:clamp(1.5rem,2.6vw,1.9rem)">Como podemos ajudar?</h2>
               <p style="font-size:.96rem">Preencha o formulário e retornaremos o mais breve possível.</p>
             </div>
-            <form data-mock novalidate>
+            <form data-lead="contato" novalidate>
               <div class="grid-fields">
                 <div class="form-field col-span-2">
                   <label>Nome <span class="req">*</span></label>
-                  <input class="input" type="text" placeholder="Seu nome completo" required>
+                  <input class="input" type="text" name="nome" autocomplete="name" maxlength="100" placeholder="Seu nome completo" required>
                 </div>
                 <div class="form-field">
                   <label>E-mail <span class="req">*</span></label>
-                  <input class="input" type="email" placeholder="voce@email.com" required>
+                  <input class="input" type="email" name="email" autocomplete="email" placeholder="voce@email.com" required>
                 </div>
                 <div class="form-field">
                   <label>Telefone <span class="req">*</span></label>
-                  <input class="input" type="tel" placeholder="(49) 90000-0000" required>
+                  <input class="input" type="tel" name="telefone" autocomplete="tel" placeholder="(49) 90000-0000" required>
                 </div>
                 <div class="form-field col-span-2">
                   <label>Assunto</label>
-                  <select class="select">
+                  <select class="select" name="assunto">
                     <option value="">Selecione um assunto</option>
                     <option>Quero comprar um imóvel</option>
                     <option>Quero alugar um imóvel</option>
@@ -209,9 +209,10 @@
                 </div>
                 <div class="form-field col-span-2">
                   <label>Mensagem <span class="req">*</span></label>
-                  <textarea class="textarea" placeholder="Escreva sua mensagem..." required></textarea>
+                  <textarea class="textarea" name="mensagem" maxlength="3000" placeholder="Escreva sua mensagem..." required></textarea>
                 </div>
               </div>
+              <label class="consent"><input type="checkbox" name="consentimento" required> <span>Concordo com a <a href="privacidade.html" target="_blank">Política de Privacidade</a> e autorizo o contato da Urupema. <span class="req">*</span></span></label>
               <div class="form-actions">
                 <button type="submit" class="btn btn--gold btn--lg btn--block">Enviar mensagem <svg><use href="#i-arrow-right"/></svg></button>
               </div>
@@ -275,7 +276,7 @@
     </div>
     <div class="footer__bottom">
       <p>© <span class="js-year">2026</span> Urupema Negócios Imobiliários — Todos os direitos reservados.</p>
-      <span class="creci">CRECI/SC · Marca registrada</span>
+      <span class="footer__legal"><a href="privacidade.html">Política de privacidade</a> · <span class="creci">CRECI/SC · Marca registrada</span></span>
     </div>
   </div>
 </footer>

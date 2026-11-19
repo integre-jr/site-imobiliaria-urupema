@@ -4,7 +4,7 @@
 # admin@teste.com / senha-admin-1 (o scripts/testa-auth.sh cria; depois dele, limpe tentativas_login:
 #   npx wrangler d1 execute urupema --local --command "DELETE FROM tentativas_login").
 # Uso: bash scripts/testa-imoveis.sh   (cria e apaga um anúncio de teste; o seed fica como estava)
-B=http://localhost:8788
+B=${B:-http://localhost:8788}   # outra porta: B=http://localhost:8790 bash scripts/...
 RAIZ=$(cd "$(dirname "$0")/.." && pwd)
 D=$(mktemp -d)
 JA="$D/jar-admin.txt"

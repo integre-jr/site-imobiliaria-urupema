@@ -99,13 +99,14 @@ body.admin [hidden], html[data-admin] [hidden] { display: none !important; }
   /* Celular: só o selo em cima e os botões em ícones com legenda pequena */
   .barra-edicao { flex-direction: column; align-items: stretch; gap: 6px; padding-top: 8px; }
   .barra-edicao__status { justify-content: space-between; }
-  .barra-edicao__acoes { margin-left: 0; }
-  .barra-edicao__botao { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 3px; padding: 6px 2px; font-size: .7rem; border-radius: var(--r-sm); }
+  /* 9 botões do admin não cabem numa linha de 390 px: viram 2 linhas (o corretor tem menos e fica em 1) */
+  .barra-edicao__acoes { margin-left: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(58px, 1fr)); gap: 2px; overflow: visible; }
+  .barra-edicao__botao { min-width: 0; flex-direction: column; gap: 3px; padding: 6px 2px; font-size: .7rem; border-radius: var(--r-sm); }
   .barra-edicao__botao .rotulo-longo { display: none; }
   .barra-edicao__botao .rotulo-curto { display: inline; }
   .barra-edicao__botao svg { width: 20px; height: 20px; }
-  html[data-admin] body { padding-bottom: calc(118px + env(safe-area-inset-bottom)); }
-  .cfg-pop { bottom: calc(126px + env(safe-area-inset-bottom)); }
+  html[data-admin] body { padding-bottom: calc(var(--barra-h, 118px) + env(safe-area-inset-bottom)); }
+  .cfg-pop { bottom: calc(var(--barra-h, 118px) + 8px + env(safe-area-inset-bottom)); }
 }
 
 /* ---------- Gaveta (painel lateral por cima do site) ---------- */
@@ -263,7 +264,7 @@ body.admin [hidden], html[data-admin] [hidden] { display: none !important; }
   gap: 8px;
   width: min(440px, calc(100vw - 24px));
 }
-@media (max-width: 860px) { html[data-admin] .toasts { bottom: calc(132px + env(safe-area-inset-bottom)); } }
+@media (max-width: 860px) { html[data-admin] .toasts { bottom: calc(var(--barra-h, 118px) + 14px + env(safe-area-inset-bottom)); } }
 body.admin--auth .toasts { bottom: 24px; }
 .toast {
   padding: 13px 16px;
@@ -508,4 +509,37 @@ html[data-admin] :is(.footer__social, .social-row) { gap: 20px; }
   .copiar .input { flex-basis: 100%; }
   .copiar .btn { flex: 1; }
   .ig-fotos { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ---------- Leads (M4) ---------- */
+.barra-edicao__botao { position: relative; }
+.barra-edicao__contador {
+  min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--r-pill);
+  background: var(--gold); color: var(--forest-900); font-size: .72rem; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.barra-edicao__contador[hidden] { display: none; }
+@media (max-width: 620px) {
+  .barra-edicao__contador { position: absolute; top: 2px; left: calc(50% + 6px); min-width: 18px; height: 18px; font-size: .66rem; padding: 0 5px; }
+}
+.leads-topo { display: grid; grid-template-columns: 1fr 190px 190px auto; gap: 10px; align-items: center; }
+.leads-rodape { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.adm-item--vazio { color: var(--muted); font-size: .92rem; }
+.lead-item .adm-item__info .tag { margin-left: 6px; }
+.lead-item.is-novo .adm-item__info strong::before { content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: var(--gold); vertical-align: middle; }
+.lead-cab { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.lead-cab .tag { margin-left: 0; }
+.lead-contato, .lead-extras { display: flex; flex-wrap: wrap; gap: 8px; }
+.lead-dados { display: grid; grid-template-columns: minmax(120px, 200px) 1fr; gap: 8px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 16px 18px; margin: 0; }
+.lead-dados dt { color: var(--muted); font-size: .86rem; }
+.lead-dados dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; white-space: pre-line; }
+.lead-sub { font-size: 1rem; color: var(--forest); }
+.lead-fotos { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.lead-fotos img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--r-sm); border: 1px solid var(--line); }
+.leads-aviso { margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--line); }
+@media (max-width: 760px) {
+  .leads-topo { grid-template-columns: 1fr 1fr; }
+  .leads-topo .input { grid-column: 1 / -1; }
+  .lead-dados { grid-template-columns: 1fr; gap: 2px; }
+  .lead-dados dd { margin-bottom: 8px; }
 }

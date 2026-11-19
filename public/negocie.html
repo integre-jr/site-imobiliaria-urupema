@@ -151,7 +151,7 @@
           <p style="font-size:.98rem">Preencha os blocos abaixo. Nossa equipe entra em contato para agendar a avaliação.</p>
         </div>
 
-        <form data-mock novalidate>
+        <form data-lead="negocie" novalidate>
           <!-- Block 1 -->
           <fieldset class="fieldset">
             <div class="fieldset__head">
@@ -161,19 +161,19 @@
             <div class="grid-fields">
               <div class="form-field col-span-2">
                 <label>Nome completo <span class="req">*</span></label>
-                <input class="input" type="text" placeholder="Seu nome" required>
+                <input class="input" type="text" name="nome" autocomplete="name" maxlength="100" placeholder="Seu nome" required>
               </div>
               <div class="form-field">
                 <label>CPF / CNPJ</label>
-                <input class="input" type="text" placeholder="000.000.000-00">
+                <input class="input" type="text" name="cpf" maxlength="30" placeholder="000.000.000-00">
               </div>
               <div class="form-field">
                 <label>Telefone / WhatsApp <span class="req">*</span></label>
-                <input class="input" type="tel" placeholder="(49) 90000-0000" required>
+                <input class="input" type="tel" name="telefone" autocomplete="tel" placeholder="(49) 90000-0000" required>
               </div>
               <div class="form-field col-span-2">
                 <label>E-mail <span class="req">*</span></label>
-                <input class="input" type="email" placeholder="voce@email.com" required>
+                <input class="input" type="email" name="email" autocomplete="email" placeholder="voce@email.com" required>
               </div>
             </div>
           </fieldset>
@@ -187,15 +187,15 @@
             <div class="form-field" style="margin-bottom:18px">
               <label>Objetivo <span class="req">*</span></label>
               <div class="radio-pills">
-                <label class="radio-pill"><input type="radio" name="negocio" checked><span><svg><use href="#i-tag"/></svg> Vender</span></label>
-                <label class="radio-pill"><input type="radio" name="negocio"><span><svg><use href="#i-key"/></svg> Alugar</span></label>
-                <label class="radio-pill"><input type="radio" name="negocio"><span><svg><use href="#i-check"/></svg> Vender ou alugar</span></label>
+                <label class="radio-pill"><input type="radio" name="negocio" value="Vender" checked><span><svg><use href="#i-tag"/></svg> Vender</span></label>
+                <label class="radio-pill"><input type="radio" name="negocio" value="Alugar"><span><svg><use href="#i-key"/></svg> Alugar</span></label>
+                <label class="radio-pill"><input type="radio" name="negocio" value="Vender ou alugar"><span><svg><use href="#i-check"/></svg> Vender ou alugar</span></label>
               </div>
             </div>
             <div class="grid-fields">
               <div class="form-field">
                 <label>Tipo de imóvel <span class="req">*</span></label>
-                <select class="select" required>
+                <select class="select" name="tipo" required>
                   <option value="">Selecione</option>
                   <option>Casa</option>
                   <option>Apartamento</option>
@@ -206,7 +206,7 @@
               </div>
               <div class="form-field">
                 <label>Valor pretendido</label>
-                <input class="input" type="text" inputmode="numeric" placeholder="R$ 0,00">
+                <input class="input" type="text" name="valor" maxlength="40" inputmode="numeric" placeholder="R$ 0,00">
                 <span class="hint">Se preferir, deixamos a avaliação por nossa conta.</span>
               </div>
             </div>
@@ -221,27 +221,27 @@
             <div class="grid-fields grid-fields--3">
               <div class="form-field">
                 <label>CEP</label>
-                <input class="input" type="text" inputmode="numeric" placeholder="88625-000">
+                <input class="input" type="text" name="cep" maxlength="12" inputmode="numeric" placeholder="88625-000">
               </div>
               <div class="form-field">
                 <label>Cidade <span class="req">*</span></label>
-                <input class="input" type="text" value="Urupema" required>
+                <input class="input" type="text" name="cidade" maxlength="80" value="Urupema" required>
               </div>
               <div class="form-field">
                 <label>Bairro</label>
-                <input class="input" type="text" placeholder="Centro">
+                <input class="input" type="text" name="bairro" maxlength="80" placeholder="Centro">
               </div>
               <div class="form-field col-span-2">
                 <label>Rua / Logradouro</label>
-                <input class="input" type="text" placeholder="Nome da rua">
+                <input class="input" type="text" name="rua" maxlength="120" placeholder="Nome da rua">
               </div>
               <div class="form-field">
                 <label>Número</label>
-                <input class="input" type="text" placeholder="Nº">
+                <input class="input" type="text" name="numero" maxlength="20" placeholder="Nº">
               </div>
               <div class="form-field col-span-full">
                 <label>Complemento / Referência</label>
-                <input class="input" type="text" placeholder="Apto, bloco, referência...">
+                <input class="input" type="text" name="complemento" maxlength="120" placeholder="Apto, bloco, referência...">
               </div>
             </div>
           </fieldset>
@@ -255,41 +255,42 @@
             <div class="grid-fields grid-fields--3" style="margin-bottom:18px">
               <div class="form-field">
                 <label>Área (m²)</label>
-                <input class="input" type="text" inputmode="numeric" placeholder="Ex.: 120">
+                <input class="input" type="text" name="area" maxlength="20" inputmode="numeric" placeholder="Ex.: 120">
               </div>
               <div class="form-field">
                 <label>Quartos</label>
-                <select class="select"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5+</option></select>
+                <select class="select" name="quartos"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5+</option></select>
               </div>
               <div class="form-field">
                 <label>Banheiros</label>
-                <select class="select"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4+</option></select>
+                <select class="select" name="banheiros"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4+</option></select>
               </div>
               <div class="form-field">
                 <label>Vagas de garagem</label>
-                <select class="select"><option value="">—</option><option>0</option><option>1</option><option>2</option><option>3+</option></select>
+                <select class="select" name="vagas"><option value="">—</option><option>0</option><option>1</option><option>2</option><option>3+</option></select>
               </div>
               <div class="form-field col-span-full">
                 <label>Diferenciais</label>
-                <input class="input" type="text" placeholder="Lareira, vista, aquecimento...">
+                <input class="input" type="text" name="diferenciais" maxlength="300" placeholder="Lareira, vista, aquecimento...">
               </div>
             </div>
             <div class="form-field" style="margin-bottom:18px">
               <label>Descrição do imóvel</label>
-              <textarea class="textarea" placeholder="Descreva os principais atrativos, estado de conservação, localização e o que torna o seu imóvel especial..."></textarea>
+              <textarea class="textarea" name="descricao" maxlength="3000" placeholder="Descreva os principais atrativos, estado de conservação, localização e o que torna o seu imóvel especial..."></textarea>
             </div>
             <div class="form-field">
               <label>Fotos do imóvel</label>
               <label class="dropzone">
                 <span class="dropzone__icon"><svg><use href="#i-upload"/></svg></span>
                 <strong>Clique para enviar as fotos</strong>
-                <span>JPG ou PNG · até 10 imagens</span>
+                <span>JPG ou PNG · até 5 fotos</span>
                 <span class="dropzone__count" style="display:block;color:var(--moss-600);font-weight:600;margin-top:8px"></span>
-                <input type="file" accept="image/*" multiple>
+                <input type="file" name="fotos" accept="image/*" multiple>
               </label>
             </div>
           </fieldset>
 
+          <label class="consent"><input type="checkbox" name="consentimento" required> <span>Concordo com a <a href="privacidade.html" target="_blank">Política de Privacidade</a> e autorizo o contato da Urupema. <span class="req">*</span></span></label>
           <div class="form-actions">
             <button type="submit" class="btn btn--gold btn--lg">Enviar cadastro <svg><use href="#i-arrow-right"/></svg></button>
             <span class="form-note"><svg><use href="#i-shield"/></svg> Seus dados estão seguros e não serão compartilhados.</span>
@@ -368,7 +369,7 @@
     </div>
     <div class="footer__bottom">
       <p>© <span class="js-year">2026</span> Urupema Negócios Imobiliários — Todos os direitos reservados.</p>
-      <span class="creci">CRECI/SC · Marca registrada</span>
+      <span class="footer__legal"><a href="privacidade.html">Política de privacidade</a> · <span class="creci">CRECI/SC · Marca registrada</span></span>
     </div>
   </div>
 </footer>

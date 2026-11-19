@@ -7,6 +7,7 @@ import { abrirConta } from './conta.js';
 import { abrirDados } from './dados.js';
 import { enviarImagemSite, prepararImagem } from './imagens.js';
 import { abrirInstagram } from './instagram.js';
+import { abrirLeads, atualizarContador } from './leads.js';
 import { abrirPortais } from './portais.js';
 import { abrirPostInstagram } from './postar.js';
 import { abrirUsuarios } from './usuarios.js';
@@ -23,6 +24,7 @@ const SPRITE = `<svg width="0" height="0" style="position:absolute" aria-hidden=
 <symbol id="adm-fechar" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
 <symbol id="adm-anuncios" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
 <symbol id="adm-mais" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></symbol>
+<symbol id="adm-leads" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></symbol>
 <symbol id="adm-foto" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></symbol>
 </svg>`;
 
@@ -87,6 +89,17 @@ function montarBarra(usuario) {
   const acoes = barra.querySelector('.barra-edicao__acoes');
   const minhaConta = () => abrirConta(usuario);
   acoes.append(botaoBarra('adm-anuncios', 'Anúncios', () => abrirAnuncios()));
+  const leads = botaoBarra('adm-leads', 'Leads', () => abrirLeads(usuario, estado));
+  const contador = document.createElement('span');
+  contador.className = 'barra-edicao__contador';
+  contador.hidden = true;
+  leads.append(contador);
+  document.addEventListener('urupema:leads-novos', (e) => {
+    contador.textContent = e.detail > 99 ? '99+' : String(e.detail);
+    contador.hidden = !e.detail;
+    leads.setAttribute('aria-label', e.detail ? `Leads: ${e.detail} novos` : 'Leads');
+  });
+  acoes.append(leads);
   if (usuario.papel === 'admin') {
     acoes.append(botaoBarra('adm-dados', 'Dados do site', () => abrirDados(estado, atualizarPagina), 'Dados'));
   }
@@ -108,6 +121,8 @@ function montarBarra(usuario) {
     }),
   );
   document.body.append(barra);
+  // Altura real da barra (1 ou 2 linhas no celular): o fim da página e o balão de edição ficam acima dela.
+  new ResizeObserver(() => document.documentElement.style.setProperty('--barra-h', barra.offsetHeight + 'px')).observe(barra);
 }
 
 // ---------- Edição no lugar ----------
@@ -352,6 +367,7 @@ if (usuario.papel === 'admin') {
 }
 montarBarra(usuario);
 ligarAnuncios();
+atualizarContador();
 
 // Volta do login do Instagram: /admin/?instagram=conectado|cancelado|erro
 const retornoIg = new URLSearchParams(location.search).get('instagram');

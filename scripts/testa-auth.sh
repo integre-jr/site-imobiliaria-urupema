@@ -4,7 +4,7 @@
 #   npx wrangler d1 execute urupema --local --command "DELETE FROM sessoes; DELETE FROM tentativas_login; DELETE FROM usuarios"
 # Depois: npm run dev (outro terminal) e  bash scripts/testa-auth.sh
 # No fim, este IP fica bloqueado no login local por 15 min (teste de força bruta); limpar tentativas_login libera.
-B=http://localhost:8788
+B=${B:-http://localhost:8788}   # outra porta: B=http://localhost:8790 bash scripts/...
 RAIZ=$(cd "$(dirname "$0")/.." && pwd)
 D=$(mktemp -d)
 JA="$D/jar-admin.txt"; JC="$D/jar-corretor.txt"

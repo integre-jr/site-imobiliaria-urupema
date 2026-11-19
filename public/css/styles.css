@@ -1116,6 +1116,16 @@ h1, h2, h3, h4, h5,
 .dropzone span { font-size: .86rem; color: var(--muted); }
 .dropzone input { display: none; }
 
+/* Envio real (M4): campo inválido, consentimento LGPD, erro do envio e campo-isca anti-robô */
+.input.is-invalid, .select.is-invalid, .textarea.is-invalid { border-color: var(--danger); }
+.consent { display: flex; gap: 10px; align-items: flex-start; margin-top: 22px; font-size: .88rem; color: var(--ink-soft); line-height: 1.5; cursor: pointer; }
+.consent input { width: 18px; height: 18px; margin-top: 2px; flex: none; accent-color: var(--forest); }
+.consent a { color: var(--forest); font-weight: 600; text-decoration: underline; }
+.consent.is-invalid { color: var(--danger); }
+.form-error { margin-top: 18px; padding: 12px 14px; border-radius: var(--r-sm); background: var(--danger-soft); color: var(--danger); font-size: .9rem; line-height: 1.5; }
+.form-error a { color: inherit; font-weight: 600; text-decoration: underline; }
+.hp-field { position: absolute !important; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+
 .form-actions { margin-top: 32px; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
 .form-note { font-size: .82rem; color: var(--muted); display: flex; align-items: center; gap: 8px; }
 .form-note svg { width: 16px; height: 16px; color: var(--moss); }
@@ -1409,6 +1419,20 @@ h1, h2, h3, h4, h5,
 .footer__bottom .creci { color: #7E9084; font-size: .86rem; }
 .footer__bottom a { color: #9DB0A4; }
 .footer__bottom a:hover { color: var(--gold); }
+.footer__legal { color: #7E9084; font-size: .86rem; }
+
+/* Política de privacidade (M4) */
+.texto-legal { max-width: 780px; }
+.texto-legal h2 { font-size: 1.3rem; margin: 34px 0 10px; }
+.texto-legal h2:first-child { margin-top: 0; }
+.texto-legal p, .texto-legal li { color: var(--ink-soft); line-height: 1.7; }
+.texto-legal p + p { margin-top: 10px; }
+.texto-legal ul { margin: 10px 0; padding-left: 20px; list-style: disc; display: grid; gap: 6px; }
+.texto-legal a { color: var(--forest); font-weight: 600; }
+.texto-legal ul.texto-legal__contatos { list-style: none; padding: 0; }
+.texto-legal__contatos li { display: flex; align-items: center; gap: 10px; }
+.texto-legal__contatos svg { width: 18px; height: 18px; color: var(--moss); flex: none; }
+.texto-legal__data { margin-top: 34px; font-size: .86rem; color: var(--muted) !important; }
 
 /* ============================================================
    16. FLOATING WHATSAPP
@@ -1611,7 +1635,10 @@ h1, h2, h3, h4, h5,
 .imovel-caracteristicas svg { width: 18px; height: 18px; color: var(--moss); flex-shrink: 0; }
 .imovel-endereco { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 14px; }
 .imovel-endereco svg { width: 18px; height: 18px; color: var(--moss); flex-shrink: 0; margin-top: 4px; }
-.imovel-contato { position: sticky; top: calc(var(--header-h) + 16px); }
+.imovel-contato { display: flex; flex-direction: column; gap: 18px; align-self: start; }
+.imovel-interesse form { display: flex; flex-direction: column; gap: 12px; }
+.imovel-interesse .consent, .imovel-interesse .form-actions { margin-top: 4px; }
+.imovel-interesse .form-success { padding: 12px 0 0; }
 .imovel-contato__card { display: flex; flex-direction: column; gap: 12px; padding: 26px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-xl); box-shadow: var(--shadow-md); }
 .imovel-contato__card > strong { font-family: var(--font-display); font-size: 1.25rem; color: var(--forest); }
 .imovel-contato__card > p { color: var(--muted); font-size: .94rem; }

@@ -263,7 +263,8 @@ const fmtCampo = (v) => (v === null || v === undefined ? '' : String(v));
 const fmtDinheiro = (v) => (v ? milhar(v) : '');
 
 // opcoes.voltarParaLista: ao fechar, reabre a lista de anúncios.
-export async function abrirEditorAnuncio(idOuRef = null, { voltarParaLista = false } = {}) {
+// inicial: valores para um anúncio NOVO (ex.: vindo de um lead do "Negocie"); fotos_lead = URLs das fotos do lead.
+export async function abrirEditorAnuncio(idOuRef = null, { voltarParaLista = false, inicial = null } = {}) {
   await carregarOpcoes();
   let im = null;
   if (idOuRef) {
@@ -551,7 +552,7 @@ export async function abrirEditorAnuncio(idOuRef = null, { voltarParaLista = fal
       }));
       if (im.fotos.length && !statusEl.textContent) statusEl.textContent = `${im.fotos.length} de ${opcoes.max_fotos} fotos. Use ★ para escolher a capa e as setas para mudar a ordem.`;
     }
-    return { render };
+    return { render, adicionar };
   })();
 
   /* ---------- CEP → ViaCEP ---------- */
@@ -599,7 +600,30 @@ export async function abrirEditorAnuncio(idOuRef = null, { voltarParaLista = fal
   });
   form.querySelector('[data-cancelar]').addEventListener('click', () => fecharGaveta());
 
-  preencher(im);
+  preencher(im || (inicial && { ...inicial }));
   fotos.render();
+  if (!im && inicial) {
+    sujo = true;
+    toast('Anúncio preenchido com os dados do lead. Confira, complete e salve.');
+    // Fotos enviadas pelo proprietário: um clique traz para o anúncio (salva o rascunho antes).
+    if (inicial.fotos_lead?.length) {
+      const b = botao(`Trazer as ${inicial.fotos_lead.length} fotos enviadas pelo proprietário`, async () => {
+        b.disabled = true;
+        try {
+          const arquivos = await Promise.all(inicial.fotos_lead.map(async (u, k) => {
+            const r = await fetch(u, { credentials: 'same-origin' });
+            if (!r.ok) throw new Error();
+            return new File([await r.blob()], `lead-${k + 1}.jpg`, { type: 'image/jpeg' });
+          }));
+          await fotos.adicionar(arquivos);
+          b.remove();
+        } catch {
+          toast('Não consegui trazer as fotos do lead. Tente de novo.', 'erro');
+          b.disabled = false;
+        }
+      }, 'btn--gold');
+      form.querySelector('[data-fotos]').prepend(b);
+    }
+  }
   f.titulo.focus();
 }

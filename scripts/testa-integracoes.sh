@@ -3,7 +3,7 @@
 # Pré-requisitos: os mesmos de scripts/testa-imoveis.sh (npm run dev; seed; admin admin@teste.com / senha-admin-1).
 # Cria um anúncio de teste, publica no Instagram simulado e apaga tudo no fim.
 # Uso: bash scripts/testa-integracoes.sh
-B=http://localhost:8788
+B=${B:-http://localhost:8788}   # outra porta: B=http://localhost:8790 bash scripts/...
 D=$(mktemp -d)
 JA="$D/jar-admin.txt"
 OK=0; FALHA=0
@@ -25,7 +25,7 @@ curl -s -o /dev/null -b "$JA" -X DELETE -H "X-Urupema: 1" $B/api/admin/instagram
 
 echo "Portais: feed"
 P=$(req GET /api/admin/portais "$JA")
-confere "gaveta Portais (admin)" '"url":"http://localhost:8788/feeds/grupo-olx-' "$P"
+confere "gaveta Portais (admin)" "\"url\":\"$B/feeds/grupo-olx-" "$P"
 URL=$(echo "$P" | campo url)
 confere "feed abre com XML VRSync" '<ListingDataFeed xmlns="http://www.vivareal.com/schemas/1.0/VRSync"' "$(curl -s "$URL")"
 confere "feed é XML" "application/xml" "$(curl -s -o /dev/null -w '%{content_type}' "$URL")"
@@ -51,7 +51,7 @@ confere "tipo de publicação" "<PublicationType>PREMIUM</PublicationType>" "$F"
 confere "preço de venda" '<ListPrice currency="BRL">450000</ListPrice>' "$F"
 confere "IPTU no formato novo" '<Iptu currency="BRL" period="Yearly">1200</Iptu>' "$F"
 confere "característica traduzida" "<Feature>Mountain View</Feature>" "$F"
-confere "foto principal com URL absoluta" 'primary="true">http://localhost:8788/fotos/imovel/' "$F"
+confere "foto principal com URL absoluta" "primary=\"true\">$B/fotos/imovel/" "$F"
 confere "CEP só com números" "<PostalCode>88625000</PostalCode>" "$F"
 confere "estado por extenso" '<State abbreviation="SC">Santa Catarina</State>' "$F"
 confere "mostra só o bairro" 'displayAddress="Neighborhood"' "$F"
@@ -78,7 +78,7 @@ confere "imagem pública para a Meta baixar" "200 image/jpeg 3004" "$(curl -s -o
 P1=$(req POST /api/admin/instagram/publicar "$JA" "{\"imovel_id\":$ID,\"legenda\":\"Teste $REF #urupema\",\"midias\":[\"$M1\",\"$M2\"]}")
 confere "1ª etapa: post criado" '"status":"publicando"' "$P1"
 PID=$(echo "$P1" | campo post_id)
-confere "2ª etapa: publicado" '"status":"publicado","permalink":"http://localhost:8788/imovel/'"$REF" "$(req POST /api/admin/instagram/concluir "$JA" "{\"post_id\":$PID}")"
+confere "2ª etapa: publicado" "\"status\":\"publicado\",\"permalink\":\"$B/imovel/""$REF" "$(req POST /api/admin/instagram/concluir "$JA" "{\"post_id\":$PID}")"
 confere "aparece no histórico como novo" '"tipo":"novo","status":"publicado"' "$(req GET "/api/admin/instagram/posts?imovel=$ID" "$JA")"
 P2=$(req POST /api/admin/instagram/publicar "$JA" "{\"imovel_id\":$ID,\"legenda\":\"Repost $REF\",\"midias\":[\"$M1\"]}")
 req POST /api/admin/instagram/concluir "$JA" "{\"post_id\":$(echo "$P2" | campo post_id)}" > /dev/null
@@ -93,7 +93,7 @@ confere "modo real" '"modo":"real","app_configurado":true,"app_origem":"painel",
 confere "conexão simulada não vale no modo real" '"conectado":false' "$S"
 nao_tem "chave secreta nunca volta ao navegador" "0123456789abcdef0123456789abcdef" "$S"
 L=$(curl -s -o /dev/null -w '%{redirect_url}' -b "$JA" "$B/api/admin/instagram/conectar")
-confere "Conectar leva ao login do Instagram" "https://www.instagram.com/oauth/authorize?client_id=1234567890123456&redirect_uri=http%3A%2F%2Flocalhost%3A8788%2Fapi%2Finstagram%2Fcallback" "$L"
+confere "Conectar leva ao login do Instagram" "https://www.instagram.com/oauth/authorize?client_id=1234567890123456&redirect_uri=http%3A%2F%2Flocalhost%3A${B##*:}%2Fapi%2Finstagram%2Fcallback" "$L"
 confere "volta ao modo demonstração" '200 {"ok":true}' "$(req DELETE /api/admin/instagram/app "$JA")"
 confere "modo demonstração de novo" '"modo":"mock"' "$(req GET /api/admin/instagram/status "$JA")"
 
