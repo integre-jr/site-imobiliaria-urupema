@@ -4,6 +4,7 @@
 import { api, ErroApi, limparErro, mostrarErro, toast } from './api.js';
 import { abrirGaveta, fecharGaveta, tituloGaveta } from './gaveta.js';
 import { enviarFoto, prepararFoto } from './imagens.js';
+import { abrirPostInstagram } from './postar.js';
 
 let opcoes = null;
 const carregarOpcoes = async () => (opcoes ??= await api('/api/imoveis/opcoes'));
@@ -104,6 +105,7 @@ export async function abrirAnuncios() {
     }
     acoes.append(botao(im.destaque ? 'Tirar destaque' : '★ Destacar', () =>
       acaoRapida(im, { destaque: !im.destaque }, im.destaque ? 'Saiu da página inicial.' : 'Vai aparecer na página inicial.')));
+    if (PUBLICOS.includes(im.status)) acoes.append(botao('Instagram', () => abrirPostInstagram(im.id)));
     if (PUBLICOS.includes(im.status) && im.no_site) {
       const ver = el('a', 'btn btn--ghost btn--sm', 'Ver no site');
       ver.href = `/imovel/${im.ref}`;
@@ -243,8 +245,10 @@ const HTML_FORM = `
   <div class="form-field" data-so-olx>
     <label for="a-olx">Tipo de anúncio nos portais</label>
     <select class="select" id="a-olx" name="tipo_publicacao_olx"></select>
-    <span class="hint">Depende do plano contratado no Canal Pro. O envio aos portais começa quando o feed for ligado.</span>
+    <span class="hint">Precisa caber no plano contratado no Canal Pro. O link do feed fica na gaveta "Portais".</span>
   </div>
+  <div class="anuncio-portais" data-portais aria-live="polite"></div>
+  <label class="check"><input type="checkbox" name="postar_instagram"> Postar no Instagram ao salvar</label>
 </fieldset>
 
 <div class="anuncio-acoes">
@@ -318,6 +322,8 @@ export async function abrirEditorAnuncio(idOuRef = null, { voltarParaLista = fal
     }
     for (const nome of NUMEROS) f[nome].value = fmtDinheiro(v[nome]);
     for (const nome of ['no_site', 'destaque', 'no_grupo_olx']) f[nome].checked = !!v[nome];
+    f.postar_instagram.checked = false;
+    mostrarPortais();
     form.querySelectorAll('input[name=caracteristicas]').forEach((c) => { c.checked = (v.caracteristicas || []).includes(c.value); });
     atualizarVisibilidade();
     contar();
@@ -340,6 +346,36 @@ export async function abrirEditorAnuncio(idOuRef = null, { voltarParaLista = fal
     form.querySelector('[data-so="venda"]').hidden = fin === 'aluguel';
     form.querySelector('[data-so="aluguel"]').hidden = fin === 'venda';
     form.querySelector('[data-so-olx]').hidden = !f.no_grupo_olx.checked;
+  }
+
+  // O que falta para o anúncio ir para OLX/ZAP/Viva Real (calculado pelo servidor ao carregar/salvar).
+  function mostrarPortais() {
+    const caixa = form.querySelector('[data-portais]');
+    caixa.replaceChildren();
+    caixa.className = 'anuncio-portais';
+    if (!im || !f.no_grupo_olx.checked) return;
+    if (im.origem === 'seed') { caixa.textContent = 'Anúncio de demonstração (fictício): nunca vai para os portais.'; return; }
+    const p = im.pendencias_portais || [];
+    if (!p.length) {
+      caixa.classList.add('is-ok');
+      caixa.textContent = im.status === 'ativo'
+        ? 'Pronto para os portais: entra na próxima leitura do Canal Pro.'
+        : 'Pronto para os portais: entra quando estiver "Publicado".';
+      return;
+    }
+    caixa.append(el('strong', '', 'Ainda não vai para os portais. Falta:'));
+    const ul = el('ul');
+    p.forEach((x) => ul.append(el('li', '', x)));
+    caixa.append(ul);
+  }
+
+  // Depois de mexer nas fotos: pede ao servidor as pendências de novo (o mínimo de fotos muda).
+  async function atualizarPendencias() {
+    try {
+      const atual = await api(`/api/admin/imoveis/${im.id}`, { semToast: true });
+      im.pendencias_portais = atual.pendencias_portais;
+      mostrarPortais();
+    } catch { /* fica o aviso anterior */ }
   }
 
   function contar() {
@@ -370,6 +406,8 @@ export async function abrirEditorAnuncio(idOuRef = null, { voltarParaLista = fal
   async function salvar({ status } = {}) {
     limparErro(form);
     const dados = lerDados();
+    const postar = dados.postar_instagram;
+    delete dados.postar_instagram;
     if (status) dados.status = status;
     if (status === 'ativo') dados.no_site = true;
     const botoes = form.querySelectorAll('.anuncio-acoes button');
@@ -386,6 +424,10 @@ export async function abrirEditorAnuncio(idOuRef = null, { voltarParaLista = fal
       preencher(im);
       fotos.render();
       avisarPagina(im.ref);
+      if (postar) {
+        if (PUBLICOS.includes(im.status)) setTimeout(() => abrirPostInstagram(im.id), 0);
+        else toast('O post no Instagram fica para quando o anúncio estiver publicado no site.', 'erro');
+      }
       return true;
     } catch (e) {
       if (e.status !== 401) {
@@ -446,7 +488,7 @@ export async function abrirEditorAnuncio(idOuRef = null, { voltarParaLista = fal
         }
       }
       statusEl.textContent = ok ? `${ok} ${ok === 1 ? 'foto enviada' : 'fotos enviadas'}.` : '';
-      if (ok) avisarPagina(im.ref);
+      if (ok) { avisarPagina(im.ref); atualizarPendencias(); }
     }
 
     async function salvarOrdem(lista) {
@@ -500,6 +542,7 @@ export async function abrirEditorAnuncio(idOuRef = null, { voltarParaLista = fal
               im.fotos.splice(k, 1);
               render();
               avisarPagina(im.ref);
+              atualizarPendencias();
             } catch { /* o api() já avisou */ }
           }),
         );
@@ -541,6 +584,7 @@ export async function abrirEditorAnuncio(idOuRef = null, { voltarParaLista = fal
   form.addEventListener('change', (e) => {
     sujo = true;
     if (e.target.name === 'finalidade' || e.target.name === 'no_grupo_olx') atualizarVisibilidade();
+    if (e.target.name === 'no_grupo_olx') mostrarPortais();
   });
   form.addEventListener('submit', async (e) => {
     e.preventDefault();

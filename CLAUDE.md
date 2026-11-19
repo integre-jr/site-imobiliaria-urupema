@@ -14,7 +14,11 @@ telas e a ordem de implementação (marcos M1–M10), está em
 painel virou o próprio site editável** (spec 8.0/8.2, marco M2b): não existe mais "tela de admin"
 separada, só login/setup + o site em `/admin` com barra de edição e gavetas. **M3 (imóveis) feito em
 17/11/2026**: anúncios vêm do banco, gestão pela gaveta "Anúncios" e pelos botões "Editar" (testes:
-`bash scripts/testa-imoveis.sh`). As seções
+`bash scripts/testa-imoveis.sh`). **M5 (portais: feed VRSync, gaveta Portais, importação do feed antigo) e
+M6 (posts no Instagram, com o `real.js` do M9 já pronto) feitos em 18/11/2026**: o cliente só cola o link do
+feed no Canal Pro e, para o Instagram real, a INTEGRE cola o ID/chave do app da Meta na gaveta Instagram e o
+dono clica em "Conectar" (testes: `bash scripts/testa-integracoes.sh`; precisa de `npm run db:local` por causa
+da migração 0005). As seções
 abaixo descrevem o site público, que por enquanto segue igual ao estático original, agora dentro
 de `public/`.
 
@@ -31,7 +35,8 @@ Site institucional da **Urupema Negócios Imobiliários** — imobiliária de Ur
   - **Windows:** parar o `pages dev` nem sempre mata o `workerd`. Um servidor órfão continua na porta 8788 servindo **sem as Functions** (a API devolve HTML). Antes de subir de novo, conferir com `netstat -ano | grep 8788` e encerrar os processos `wrangler pages dev`/`workerd` que sobraram.
 - **Abrir direto (`file://`)** ainda funciona para olhar o visual estático de `public/*.html`, sem API.
 - **Senha esquecida do administrador:** ver [docs/RECUPERAR-SENHA.md](docs/RECUPERAR-SENHA.md) (`scripts/hash-senha.mjs`).
-- **Instagram:** roda em modo demonstração (`INSTAGRAM_MODO = "mock"`). Para ligar a conta real (app da Meta + convite de testador), ver [docs/INSTAGRAM.md](docs/INSTAGRAM.md).
+- **Instagram:** roda em modo demonstração até alguém salvar o app da Meta na gaveta Instagram ("Conta real do Instagram"). Passo a passo (app da Meta + convite de testador) em [docs/INSTAGRAM.md](docs/INSTAGRAM.md). O modo real exige https: não dá para conectar a conta real pelo `localhost`.
+- **Portais:** a gaveta Portais mostra o link do feed para colar no Canal Pro. Para o anúncio entrar, valem as exigências do VRSync (mín. 5 fotos, CEP, descrição ≥ 50 etc.); a gaveta e o formulário do anúncio listam o que falta.
 - **Publicar:** conferir `npx wrangler whoami` (conta "Urupema Negócios Imobiliários") e rodar `npm run deploy` → `https://urupema-imoveis.pages.dev`. Migrações remotas: `npm run db:remoto`.
   - A conta fica fixada em `CLOUDFLARE_ACCOUNT_ID` no `.env` (ignorado pelo Git): o Pages recusa `account_id` no `wrangler.toml`. Recriar o `.env` numa máquina nova.
   - O projeto foi criado no Pages **clássico** (`pages project create --force`), porque o wrangler 4.16x tenta migrar Pages para Workers. Não passar `--force` de novo; os comandos seguintes já vão direto ao Pages.
@@ -61,12 +66,16 @@ public/                  ← tudo que é servido estático (pages_build_output_d
   admin/login.html setup.html ← as ÚNICAS páginas próprias do painel
   css/admin.css          ← modo edição (barra, contornos, balão, gavetas) + login; mesmos tokens
   js/admin/              ← editor.js (entrada: barra + edição no lugar; novos botões entram em montarBarra),
-                           gaveta.js, api.js (fetch + toasts + forms), uma gaveta por módulo (usuarios, conta, dados)
+                           gaveta.js, api.js (fetch + toasts + forms), uma gaveta por módulo (usuarios, conta, dados,
+                           instagram, portais), postar.js (modal "Postar no Instagram": imagens 4:5 + publicação)
 functions/
   _middleware.js         ← site público: aplica os dados editáveis (data-cfg) no HTML; tira ETag
   admin/_middleware.js   ← /admin/<página> = página pública em modo edição (links reescritos, editor injetado); sem sessão → login
   api/admin/config.js    ← GET|PUT dos dados editáveis (só admin); campos, validação e links em lib/config.js
-  api/admin/instagram/*  ← status, conectar (navegação → login do Instagram), desconectar; o _middleware renova o token
+  api/admin/instagram/*  ← status, conectar (navegação → login do Instagram), desconectar, app (ID/chave do app da Meta → modo real),
+                           previa, midias (D1, 24 h), publicar + concluir (2 etapas), posts; o _middleware carrega o app e renova o token
+  feeds/[arquivo].js     ← /feeds/grupo-olx-<token>.xml (VRSync; token no banco; anúncios seed nunca entram)
+  api/admin/portais.js   ← gaveta Portais (link, pendências, leituras); api/admin/importar/{buscar,foto}.js (feed antigo)
   api/instagram/callback.js ← volta do OAuth (sessão de admin + state em cookie) → /admin/?instagram=…
   api/imoveis/*          ← lista pública com filtros, opcoes (vocabulários), um imóvel
   api/admin/imoveis/*    ← anúncios: listar/criar, :id (número ou "UR-1024") GET/PUT parcial/DELETE, fotos, fotos-ordem; api/admin/fotos/:id
@@ -78,8 +87,9 @@ functions/
   api/admin/usuarios/*   ← CRUD de usuários (só admin; ninguém tira o próprio acesso)
 lib/                     ← db.js, http.js, html.js, validacao.js, auth.js (PBKDF2, sessão, força bruta, CSRF, soAdmin), config.js,
                            cripto.js (base64, AES-GCM com TOKEN_KEY), instagram/ (index = interface; mock.js | real.js por INSTAGRAM_MODO),
-                           imoveis.js (vocabulários 6.1, validação, filtros, formato de saída), anuncios.js, pagina-imovel.js
-migrations/              ← 0001 esquema, 0002 seed, 0003 sessoes.dias, 0004 endereço em 2 chaves (endereco_1/_2)
+                           imoveis.js (vocabulários 6.1, validação, filtros, formato de saída), anuncios.js, pagina-imovel.js,
+                           vrsync.js (feed + pendências), portais.js (token, candidatos), importar.js, instagram/legenda.js
+migrations/              ← 0001 esquema, 0002 seed, 0003 sessoes.dias, 0004 endereço em 2 chaves (endereco_1/_2), 0005 ig_container_id
 scripts/hash-senha.mjs   ← redefine a senha de um usuário direto no D1
 wrangler.toml  package.json  .env/.dev.vars (fora do Git)
 ```
@@ -158,6 +168,8 @@ Telefones, WhatsApp, e-mail, endereço, links das redes e os 3 números da home 
 - `data-cfg="chave"` → o servidor troca o **texto**; no modo edição, o elemento fica editável no lugar.
 - `data-cfg-href="chave"` → o servidor troca o **link** (`tel:+55…`, `https://wa.me/…`, `mailto:`, URL), conforme o tipo em `lib/config.js`.
 - `data-cfg-mapa` → `src` do mapa do Google gerado do endereço (só em `contato.html`).
+- `data-cfg-img="chave"` → o servidor troca o `src` da foto (campo tipo `imagem`; no modo edição aparece o botão "Trocar foto").
+- Textos do próprio site (faixas de números, "Nossa história", "Nossos valores") usam `data-cfg` com campos `gaveta: 'pagina'` em `lib/config.js`: editados só no lugar, sem migração (sem linha no banco vale o texto do HTML). Tipo `destaque` deixa o ★/% final dourado; `paragrafo` abre caixa de texto grande.
 
 **Ao colocar um telefone, link de WhatsApp/rede, e-mail ou endereço novo em qualquer página, marque-o.**
 Sem a marcação, ele não muda quando o dono edita. Chave nova = acrescentar em `CAMPOS` (`lib/config.js`) + migração com o valor inicial.

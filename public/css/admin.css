@@ -431,3 +431,81 @@ body.admin--auth {
 /* Nos números do topo da home, só o lápis: a palavra "Editar" empurraria o 3º número para outra linha */
 .hero__stat .cfg-lapis { padding: 4px; margin-left: 6px; }
 .hero__stat .cfg-lapis span { display: none; }
+.stat-band .stat .cfg-lapis { padding: 4px; margin-left: 6px; }
+.stat-band .stat .cfg-lapis span { display: none; }
+
+/* Balão com parágrafo: mais largo para o texto longo */
+.cfg-pop--largo { width: min(560px, calc(100vw - 24px)); }
+
+/* "Trocar foto" das fotos fixas do site (fundo do topo da home) */
+.trocar-foto {
+  position: absolute;
+  z-index: 3;
+  top: 16px;
+  right: var(--gutter);
+  box-shadow: var(--shadow-md);
+}
+
+/* Contornos sem sobreposição: o contorno fica 3 px para fora do elemento, então dois dados editáveis
+   empilhados (número + legenda, título + parágrafo, as 2 linhas do endereço) precisam de folga entre si.
+   Só no modo edição; o site público não muda. */
+html[data-admin] .cfg-editavel:not(.cfg-editavel--canto) + .cfg-editavel:not(.cfg-editavel--canto) { margin-top: 12px; }
+html[data-admin] :is(span, a).cfg-editavel:not(.btn, .cfg-editavel--canto) { display: inline-block; margin-block: 5px; }
+/* Ícones das redes: o lápis do canto e o contorno de um não podem cobrir o vizinho */
+html[data-admin] :is(.footer__social, .social-row) { gap: 20px; }
+/* Rodapé: a coluna de contato é estreita; o selo quebraria a linha ou cobriria o texto.
+   Fica só o contorno pontilhado (que já indica a edição); os ícones das redes mantêm o lápis do canto. */
+.footer .cfg-editavel:not(.cfg-editavel--canto) .cfg-lapis { display: none; }
+
+/* ============================================================
+   6. INTEGRAÇÕES: POST NO INSTAGRAM, PORTAIS E IMPORTAÇÃO (M5/M6)
+   ============================================================ */
+.copiar { display: flex; gap: 8px; align-items: center; }
+.copiar .input { flex: 1; font-size: .88rem; }
+.ig-app { padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); display: flex; flex-direction: column; gap: 12px; }
+.ig-app[open] { gap: 14px; }
+.ig-app summary { cursor: pointer; font-family: var(--font-display); font-weight: 700; color: var(--forest); }
+.ig-app[open] > summary { margin-bottom: 4px; }
+.ig-app > .btn { align-self: flex-start; }
+.ig-historico { display: flex; flex-direction: column; gap: 10px; }
+.ig-historico .hint.is-alerta { font-weight: 500; }
+
+/* Modal "Postar no Instagram" */
+.adm-dialog.ig-post { width: min(720px, calc(100vw - 24px)); }
+.ig-post__corpo { display: flex; flex-direction: column; gap: 14px; }
+.ig-post__corpo .form-erro:not([hidden]) { display: block; }
+.ig-post__fotos { display: flex; flex-direction: column; gap: 10px; }
+.ig-post__fotos legend { font-family: var(--font-display); font-weight: 700; color: var(--forest); margin-bottom: 8px; }
+.ig-fotos { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.ig-foto label { position: relative; display: block; aspect-ratio: 4 / 5; border-radius: var(--r-xs); overflow: hidden; background: var(--line-soft); cursor: pointer; outline: 3px solid transparent; outline-offset: -3px; }
+.ig-foto img { width: 100%; height: 100%; object-fit: cover; opacity: .45; transition: opacity .15s var(--ease); }
+.ig-foto.is-marcada label { outline-color: var(--gold); }
+.ig-foto.is-marcada img { opacity: 1; }
+.ig-foto input { position: absolute; top: 6px; left: 6px; width: 20px; height: 20px; accent-color: var(--forest); z-index: 1; }
+.ig-foto__n { position: absolute; right: 6px; bottom: 6px; min-width: 24px; padding: 2px 7px; border-radius: var(--r-pill); background: var(--gold); color: var(--forest-900); font: 700 .78rem/1.4 var(--font-display); text-align: center; }
+.ig-foto__n:empty { display: none; }
+.ig-post__progresso { font-size: .9rem; color: var(--forest); font-weight: 600; min-height: 1.4em; }
+.ig-post__ok { padding: 18px; border-radius: var(--r-lg); background: var(--moss-soft); display: flex; flex-direction: column; gap: 6px; }
+.ig-post__ok strong { font-family: var(--font-display); color: var(--forest); font-size: 1.1rem; }
+
+/* Portais: aviso no formulário do anúncio e pendências */
+.anuncio-portais:empty { display: none; }
+.anuncio-portais { padding: 12px 14px; border-radius: var(--r-sm); background: var(--danger-soft); color: var(--ink); font-size: .9rem; }
+.anuncio-portais.is-ok { background: var(--moss-soft); color: var(--moss-600); font-weight: 600; }
+.anuncio-portais strong { display: block; color: var(--danger); margin-bottom: 4px; }
+.anuncio-portais ul, .portais-pendencias { list-style: disc; padding-left: 20px; display: flex; flex-direction: column; gap: 2px; }
+.portais-pendencias { margin-top: 6px; font-size: .86rem; color: var(--danger); }
+.portais-conteudo { display: flex; flex-direction: column; gap: 16px; }
+.portais-conteudo > .form-erro:not([hidden]) { display: block; }
+.importar-previa { display: flex; flex-direction: column; gap: 12px; }
+.importar-lista { max-height: 360px; overflow-y: auto; }
+.importar-lista .check { align-items: flex-start; }
+.importar-lista strong { display: block; font-family: var(--font-display); color: var(--forest); font-size: .92rem; }
+.importar-lista small { display: block; color: var(--muted); font-size: .84rem; }
+.importar-previa .adm-form__acoes .select { width: auto; flex: 1 1 220px; }
+@media (max-width: 620px) {
+  .copiar { flex-wrap: wrap; }
+  .copiar .input { flex-basis: 100%; }
+  .copiar .btn { flex: 1; }
+  .ig-fotos { grid-template-columns: repeat(3, 1fr); }
+}

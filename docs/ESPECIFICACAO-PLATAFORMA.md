@@ -434,7 +434,7 @@ O painel **não** é um sistema separado: é o site, com os pontos de edição l
   `/admin` (assets relativos viram absolutos), `<html data-admin>`, `admin.css` e `js/admin/editor.js`.
   Página que não existe no site → 404. Só `login.html` e `setup.html` são páginas próprias do painel.
 - **O que é editável é só o que esta especificação prevê** (imóveis, dados do site da 6.2, leads,
-  usuários, Instagram, portais). Textos institucionais, layout e fotos fixas das páginas **não** são editáveis.
+  usuários, Instagram, portais). Layout não é editável. Textos institucionais e fotos fixas, só os marcados em `lib/config.js` (gaveta `pagina`, 17/11/2026: foto do topo da home, faixas de números, "Nossa história" e "Nossos valores" do Sobre).
 - A segurança é do servidor: toda alteração passa por `/api/admin/*` (sessão + CSRF + papel). A barra
   só esconde o que o papel não pode fazer.
 
@@ -479,6 +479,7 @@ Mesma identidade do site (`styles.css` + `admin.css`, tokens de `:root`, sem cor
 | O quê | Onde se edita | Papel | Marco |
 |---|---|---|---|
 | **Dados do site** (6.2: contato, redes, números da home) | no lugar + gaveta **"Dados do site"** (formulário com todos, útil para ícones e para o número do WhatsApp) | admin | feito (17/11) |
+| **Textos e fotos do site** (marcados, gaveta `pagina` em `lib/config.js`) | só no lugar: texto/parágrafo no balão; foto com o botão **"Trocar foto"** (navegador reduz para 1920 px JPEG → `POST /api/admin/imagens` → KV `site/<uuid>.jpg`, a antiga é apagada). Sem valor no banco vale o texto do HTML | admin | feito (17/11) |
 | **Usuários** | gaveta "Usuários": criar, editar papel, ativar/desativar, redefinir senha, excluir | admin | feito (17/11) |
 | **Minha conta** | gaveta "Minha conta": trocar a própria senha, sair de todos os aparelhos | todos | feito (17/11) |
 | **Imóveis** | botão **"+ Novo imóvel"** na barra; nos cards da home e de `imoveis.html`: botões Editar, ★ destaque (alterna na hora), status e **Repostar no Instagram**. A página `/admin/imovel/<ref>` é a própria página do imóvel editável: título, preços e descrição no lugar; galeria com adicionar/reordenar/excluir fotos (8.3); o resto (finalidade, tipo, endereço com ViaCEP, medidas, características 6.1, publicação: status, destaque, site, OLX/ZAP/Viva Real + tipo de publicação, **☐ Publicar no Instagram ao salvar**) numa gaveta "Detalhes do imóvel". Avisa ao sair com alterações não salvas. Rascunhos e arquivados aparecem só no painel, com etiqueta | admin e corretor | M3 |
@@ -562,6 +563,21 @@ por exemplo "🛏 3 quartos · 🚿 2 banheiros · 🚗 2 vagas · 📐 180 m²"
 de legenda e hashtags) e o passo a passo em `docs/INSTAGRAM.md`. Falta no M6: `publicar`, `limiteUso`, mídias
 temporárias, modal de pré-visualização, publicar ao salvar, repostar e histórico (dependem dos imóveis).
 
+**Implementado em 18/11/2026 (M6, e o código do M9): a publicação.** `criarPost`/`concluirPost`/`limiteUso` em
+`mock.js` e `real.js` (endpoints conferidos na doc da Meta em 18/11/2026, versão v27.0); rotas `previa`, `midias`,
+`publicar`, `concluir`, `posts` e `app` em `functions/api/admin/instagram/`; modal `public/js/admin/postar.js`
+(lista de anúncios, formulário com "Postar no Instagram ao salvar", página do imóvel e histórico).
+Decisões tomadas na implementação:
+- **Publicação em duas etapas** (o "[CONFERIR] limite de duração" da 9.4): `/publicar` cria o contêiner e
+  `/concluir` é chamado pelo navegador a cada 3 s até o status `FINISHED`; desiste após 5 min.
+- **App da Meta pelo painel:** o admin cola ID e chave secreta do app na gaveta Instagram
+  (`integracoes(instagram_app)`, criptografado). Isso liga o modo real sem deploy; os segredos
+  `IG_APP_ID`/`IG_APP_SECRET` + `INSTAGRAM_MODO=real` continuam valendo como alternativa.
+- **Endereços pelo domínio da requisição** (não `SITE_URL`): redirect URI do OAuth e URLs das imagens
+  seguem o domínio por onde o painel é aberto, então a troca de domínio no M10 não exige mudar variável.
+- Só se posta anúncio Publicado/Reservado (o post leva para a página dele). Opção "fotos inteiras" no modal
+  (faixas verdes) além da regra de corte da 9.2.
+
 **Decisão de 17/11/2026: convite de testador, sem análise da Meta.** O app fica em modo de desenvolvimento e a
 conta da imobiliária entra como Instagram Tester (acesso padrão basta para contas adicionadas ao app). Reavaliar
 a análise perto do M9, se quiserem tirar do cliente o passo de aceitar o convite.
@@ -603,6 +619,18 @@ a análise perto do M9, se quiserem tirar do cliente o passo de aceitar o convit
 ---
 
 ## 10. Portais: feed VRSync (Grupo OLX: OLX, ZAP, Viva Real)
+
+**Implementado em 18/11/2026 (M5).** `lib/vrsync.js` (gerador + `pendencias`), `lib/portais.js`,
+`functions/feeds/[arquivo].js`, `GET|POST /api/admin/portais`, importação (`lib/importar.js`,
+`/api/admin/importar/buscar|foto`) e a gaveta `public/js/admin/portais.js`. Testes: `scripts/testa-integracoes.sh`.
+Formato **conferido em developers.grupozap.com/feeds/vrsync em 18/11/2026**, o que corrigiu esta seção:
+`Iptu currency="BRL" period="Yearly"` (o `YearlyTax` saiu de uso); `Garage` sem atributo `type`; áreas inteiras;
+`State` com o nome por extenso; `PublicationType` aceita também `PREMIERE_1`, `PREMIERE_2` (Zap+) e `TRIPLE`;
+Features: `Mountain View`, `Garden Area`, `Solar Energy`, `Artesian Well`, `Warehouse`, `Pomar`. Exigências
+oficiais viraram pendências (10.3): título 10–100, descrição 50–3.000, **mínimo de 5 fotos**, **CEP obrigatório**.
+Decisões: o trecho secreto da URL fica no banco (`configuracoes` `portais.feed_token`, criado sozinho e
+trocável pelo painel; `FEED_TOKEN` só serve de valor inicial); **anúncios de demonstração (`origem=seed`)
+nunca entram no feed**; leituras feitas com sessão do painel não contam como leitura do portal.
 
 ### 10.1 Rota
 `GET /feeds/grupo-olx-<FEED_TOKEN>.xml` (`functions/feeds/[arquivo].js`). Token errado → 404.
@@ -749,8 +777,8 @@ site, listagem, detalhe, formulários e o fluxo completo do admin.
 | M2b | **Modo edição** (8.0, feito em 17/11/2026): `/admin` serve o site editável, barra de edição, gavetas Usuários/Minha conta/Dados do site, e o conteúdo editável do antigo M7 | Trocar telefone no painel muda todas as páginas; o endereço público não mostra edição |
 | M3 | **Imóveis** (feito em 17/11/2026): API pública, gestão de anúncios no modo edição, fotos (KV), vitrine da home, `imoveis.html`, `/imovel/:ref` (e `/admin/imovel/:ref`), `404.html`, refatoração do main.js. **Ajuste pedido pelo Tomaz:** no painel, cada dado editável tem um botão "Editar" visível; a vitrine e a listagem têm "Editar anúncios" e "Novo anúncio"; cada card e a página do imóvel têm "Editar". A edição do anúncio é um formulário numa gaveta larga (não "no lugar"), com fotos, CEP, características e publicação | Cadastrar pelo celular com fotos → aparece na home, na listagem e no detalhe; filtros e favoritos funcionam |
 | M4 | **Leads + LGPD**: names nos forms, `/api/leads`, gaveta de leads, CSV, privacidade.html, "criar imóvel a partir do lead" | Os 3 formulários + "tenho interesse" chegam ao admin |
-| M5 | **Portais**: feed VRSync, validação/pendências, gaveta Portais, importação de feed | Feed abre no navegador com XML válido; pendências aparecem; importação funciona com um XML de exemplo |
-| M6 | **Instagram (mock)**: ~~interface, conexão, gaveta Instagram~~ (feito em 17/11) + midias temp, modal, publicar ao salvar, repostar, histórico | Demo completa: cadastrar → "publicar no Instagram" → post simulado no histórico; repostar imóvel antigo |
+| M5 | **Portais** (feito em 18/11/2026): feed VRSync, validação/pendências, gaveta Portais, importação de feed | Feed abre no navegador com XML válido; pendências aparecem; importação funciona com um XML de exemplo |
+| M6 | **Instagram (mock)** (feito em 18/11/2026): ~~interface, conexão, gaveta Instagram~~ (17/11) + midias temp, modal, publicar ao salvar, repostar, histórico. O código do M9 (`real.js` publicando) foi junto; falta só o app da Meta e a conta do cliente | Demo completa: cadastrar → "publicar no Instagram" → post simulado no histórico; repostar imóvel antigo |
 | M7 | ~~Conteúdo editável~~: **adiantado para o M2b** | (feito) |
 | M8 | **Polimento**: Painel com alertas, sitemap/robots, 404, revisão mobile, atualizar `CLAUDE.md` | **Versão de demonstração para o cliente** |
 | M9 | **Instagram real** (`real.js`), quando houver a conta do cliente | Post real publicado na conta conectada |

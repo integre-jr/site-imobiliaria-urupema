@@ -4,11 +4,17 @@ import { carregarImovel, COLUNAS, listarFotos } from '../../../../lib/anuncios.j
 import { agora, todos, um } from '../../../../lib/db.js';
 import { erro, json, lerJson } from '../../../../lib/http.js';
 import { validarImovel } from '../../../../lib/imoveis.js';
+import { pendencias } from '../../../../lib/vrsync.js';
 
 async function completo(env, im) {
   let caracteristicas = [];
   try { caracteristicas = JSON.parse(im.caracteristicas); } catch { /* vazio */ }
-  return { ...im, caracteristicas, destaque: !!im.destaque, no_site: !!im.no_site, no_grupo_olx: !!im.no_grupo_olx, fotos: await listarFotos(env, im.id) };
+  const fotos = await listarFotos(env, im.id);
+  // O que impede o anúncio de ir para OLX/ZAP/Viva Real (o formulário mostra o aviso).
+  const portais = im.origem === 'seed'
+    ? ['Anúncio de demonstração: nunca vai para os portais.']
+    : pendencias(im, fotos.length);
+  return { ...im, caracteristicas, destaque: !!im.destaque, no_site: !!im.no_site, no_grupo_olx: !!im.no_grupo_olx, fotos, pendencias_portais: portais };
 }
 
 export async function onRequestGet({ env, params }) {

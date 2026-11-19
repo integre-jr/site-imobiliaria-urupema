@@ -5,7 +5,10 @@ import { abrirAnuncios, abrirEditorAnuncio } from './anuncios.js';
 import { api, ErroApi, toast, valorParaCampo } from './api.js';
 import { abrirConta } from './conta.js';
 import { abrirDados } from './dados.js';
+import { enviarImagemSite, prepararImagem } from './imagens.js';
 import { abrirInstagram } from './instagram.js';
+import { abrirPortais } from './portais.js';
+import { abrirPostInstagram } from './postar.js';
 import { abrirUsuarios } from './usuarios.js';
 
 const SPRITE = `<svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -16,9 +19,11 @@ const SPRITE = `<svg width="0" height="0" style="position:absolute" aria-hidden=
 <symbol id="adm-externo" viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
 <symbol id="adm-sair" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
 <symbol id="adm-instagram" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><path d="M17.5 6.5h.01"/></symbol>
+<symbol id="adm-portais" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
 <symbol id="adm-fechar" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
 <symbol id="adm-anuncios" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
 <symbol id="adm-mais" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></symbol>
+<symbol id="adm-foto" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></symbol>
 </svg>`;
 
 // Botão "Editar" visível ao lado de cada informação editável.
@@ -31,11 +36,22 @@ function selo(texto, canto) {
   return s;
 }
 
+const ehSelo = (n) => n.nodeType === 1 && n.classList.contains('cfg-lapis');
+
 // Troca o texto de um dado editável sem apagar o selo "Editar" que fica dentro dele.
-function definirTexto(el, valor) {
-  [...el.childNodes].forEach((n) => { if (!(n.nodeType === 1 && n.classList.contains('cfg-lapis'))) n.remove(); });
-  el.prepend(valor);
+// "destaque" (números da faixa verde): o símbolo final (★, %) fica dourado, como em lib/config.js.
+function definirTexto(el, valor, tipo) {
+  [...el.childNodes].forEach((n) => { if (!ehSelo(n)) n.remove(); });
+  const m = tipo === 'destaque' && /^(.*?)([%★]+)$/.exec(valor);
+  if (!m) return el.prepend(valor);
+  const u = document.createElement('span');
+  u.className = 'u';
+  u.textContent = m[2];
+  el.prepend(m[1], u);
 }
+
+// Texto que está na página, sem o selo. Vale para os textos do site ainda não editados (sem valor no banco).
+const textoDe = (el) => [...el.childNodes].filter((n) => !ehSelo(n)).map((n) => n.textContent).join('').replace(/\s+/g, ' ').trim();
 
 const TIPO_INPUT = { telefone: 'tel', whatsapp: 'tel', email: 'email', url: 'url' };
 
@@ -75,6 +91,9 @@ function montarBarra(usuario) {
     acoes.append(botaoBarra('adm-dados', 'Dados do site', () => abrirDados(estado, atualizarPagina), 'Dados'));
   }
   acoes.append(botaoBarra('adm-instagram', 'Instagram', () => abrirInstagram(usuario, estado, atualizarPagina)));
+  if (usuario.papel === 'admin') acoes.append(botaoBarra('adm-portais', 'Portais', () => abrirPortais()));
+  // O modal de post pede para abrir a gaveta Instagram (ex.: conta ainda não conectada).
+  document.addEventListener('urupema:abrir-instagram', () => abrirInstagram(usuario, estado, atualizarPagina));
   if (usuario.papel === 'admin') {
     acoes.append(botaoBarra('adm-usuarios', 'Usuários', () => abrirUsuarios(minhaConta)));
   }
@@ -99,7 +118,11 @@ function atualizarPagina(novo) {
   estado = novo;
   document.querySelectorAll('[data-cfg]').forEach((el) => {
     const v = estado.valores[el.dataset.cfg];
-    if (v !== undefined) definirTexto(el, v);
+    if (v) definirTexto(el, v, estado.campos[el.dataset.cfg]?.tipo);    // vazio = texto do HTML, ainda não editado
+  });
+  document.querySelectorAll('[data-cfg-img]').forEach((el) => {
+    const v = estado.valores[el.dataset.cfgImg];
+    if (v && el.getAttribute('src') !== v) el.src = v;
   });
   document.querySelectorAll('[data-cfg-href]').forEach((el) => {
     const h = estado.hrefs[el.dataset.cfgHref];
@@ -137,10 +160,22 @@ function abrirPop(alvo) {
       <button class="btn btn--primary btn--sm" type="submit">Salvar</button>
     </div>`;
   pop.querySelector('label').textContent = campo.rotulo;
-  const input = pop.querySelector('input');
-  input.type = TIPO_INPUT[campo.tipo] || 'text';
+  let input = pop.querySelector('input');
+  if (campo.tipo === 'paragrafo') {
+    const area = document.createElement('textarea');
+    area.className = 'textarea';
+    area.id = input.id;
+    area.name = input.name;
+    area.required = true;
+    area.rows = 6;
+    input.replaceWith(area);
+    input = area;
+    pop.classList.add('cfg-pop--largo');
+  } else {
+    input.type = TIPO_INPUT[campo.tipo] || 'text';
+  }
   if (campo.max) input.maxLength = campo.max;
-  input.value = valorParaCampo(campo, estado.valores[chave]);
+  input.value = valorParaCampo(campo, estado.valores[chave]) || (alvo.dataset.cfg ? textoDe(alvo) : '');
   if (campo.ajuda) {
     const dica = pop.querySelector('.hint');
     dica.textContent = campo.ajuda;
@@ -181,7 +216,7 @@ function abrirPop(alvo) {
     pop.style.top = (cabeAbaixo ? r.bottom + 8 : Math.max(12, r.top - altura - 8)) + 'px';
   }
   input.focus();
-  input.select();
+  if (campo.tipo !== 'paragrafo') input.select();
 }
 
 function ligarEdicaoNoLugar() {
@@ -217,6 +252,39 @@ function ligarEdicaoNoLugar() {
   });
 }
 
+// Fotos fixas do site ([data-cfg-img], ex.: fundo do topo da home): botão "Trocar foto" na seção.
+function ligarImagens() {
+  document.querySelectorAll('[data-cfg-img]').forEach((img) => {
+    const chave = img.dataset.cfgImg;
+    const campo = estado.campos[chave];
+    if (!campo) return;
+    const seletor = document.createElement('input');
+    seletor.type = 'file';
+    seletor.accept = 'image/*';
+    seletor.hidden = true;
+    const b = botaoAcao('Trocar foto', 'btn--gold trocar-foto', () => seletor.click(), 'adm-foto');
+    b.title = campo.rotulo;
+    seletor.addEventListener('change', async () => {
+      const arquivo = seletor.files[0];
+      seletor.value = '';
+      if (!arquivo) return;
+      b.disabled = true;
+      const rotulo = b.lastChild;
+      rotulo.textContent = ' Enviando…';
+      try {
+        atualizarPagina(await enviarImagemSite(chave, await prepararImagem(arquivo)));
+        toast('Foto trocada. Já aparece no site.');
+      } catch (err) {
+        if (!(err instanceof ErroApi && err.status === 401)) toast(err.message, 'erro');
+      } finally {
+        b.disabled = false;
+        rotulo.textContent = ' Trocar foto';
+      }
+    });
+    (img.closest('section') || img.parentElement).append(b, seletor);
+  });
+}
+
 // ---------- Anúncios: botões junto da vitrine, dos cards e da página do imóvel ----------
 
 function botaoAcao(texto, classe, aoClicar, icone = 'adm-lapis') {
@@ -243,7 +311,10 @@ function ligarAnuncios() {
   const slot = document.querySelector('[data-admin-anuncio]');
   if (main && slot) {
     slot.classList.add('admin-acoes');
-    slot.append(botaoAcao('Editar este anúncio', 'btn--gold', () => abrirEditorAnuncio(main.dataset.imovelId)));
+    slot.append(
+      botaoAcao('Editar este anúncio', 'btn--gold', () => abrirEditorAnuncio(main.dataset.imovelId)),
+      botaoAcao('Postar no Instagram', 'btn--outline', () => abrirPostInstagram(main.dataset.imovelId), 'adm-instagram'),
+    );
   }
   decorarCards(document);
   document.addEventListener('urupema:cards', (e) => decorarCards(e.detail.grade));
@@ -277,6 +348,7 @@ const { usuario } = await api('/api/auth/me');
 if (usuario.papel === 'admin') {
   estado = await api('/api/admin/config');
   ligarEdicaoNoLugar();
+  ligarImagens();
 }
 montarBarra(usuario);
 ligarAnuncios();

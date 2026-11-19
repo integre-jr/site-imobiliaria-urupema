@@ -803,7 +803,7 @@ h1, h2, h3, h4, h5,
 }
 .spec { display: inline-flex; align-items: center; gap: 7px; color: var(--ink-soft); font-size: .88rem; font-weight: 500; }
 .spec svg { width: 17px; height: 17px; color: var(--forest-600); }
-.card-cta { margin-top: 18px; }
+.card-cta { margin-top: auto; padding-top: 18px; }   /* auto: o botão fica no pé do card, alinhado entre cards de alturas diferentes */
 .card-cta .btn { width: 100%; }
 
 .grid-more { text-align: center; margin-top: 48px; }

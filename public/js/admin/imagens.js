@@ -19,14 +19,17 @@ function reduzir(bmp, lado, qualidade) {
   return new Promise((ok, falha) => canvas.toBlob((blob) => (blob ? ok({ blob, w, h }) : falha(new Error('toBlob'))), 'image/jpeg', qualidade));
 }
 
-// Arquivo escolhido (câmera ou galeria) → { g, p, largura, altura }.
-export async function prepararFoto(arquivo) {
-  let bmp;
+async function abrir(arquivo) {
   try {
-    bmp = await createImageBitmap(arquivo, { imageOrientation: 'from-image' });   // respeita a rotação da câmera
+    return await createImageBitmap(arquivo, { imageOrientation: 'from-image' });   // respeita a rotação da câmera
   } catch {
     throw new Error(`"${arquivo.name}": formato não suportado. Envie JPG ou PNG.`);
   }
+}
+
+// Arquivo escolhido (câmera ou galeria) → { g, p, largura, altura }.
+export async function prepararFoto(arquivo) {
+  const bmp = await abrir(arquivo);
   try {
     let g = await reduzir(bmp, 1600, 0.82);
     if (g.blob.size > MAX_G) g = await reduzir(bmp, 1600, 0.66);
@@ -38,15 +41,30 @@ export async function prepararFoto(arquivo) {
   }
 }
 
-export async function enviarFoto(imovelId, foto) {
+// Foto fixa do site (fundo do topo): uma versão só, larga, para telas grandes. O servidor aceita até 2 MB.
+export async function prepararImagem(arquivo) {
+  const bmp = await abrir(arquivo);
+  try {
+    let r = await reduzir(bmp, 1920, 0.82);
+    if (r.blob.size > 1.9 * 1024 * 1024) r = await reduzir(bmp, 1920, 0.66);
+    return r.blob;
+  } finally {
+    bmp.close?.();
+  }
+}
+
+// Devolve o pacote de /api/admin/config já com a foto nova.
+export async function enviarImagemSite(chave, blob) {
   const dados = new FormData();
-  dados.append('g', foto.g, 'g.jpg');
-  dados.append('p', foto.p, 'p.jpg');
-  dados.append('largura', String(foto.largura));
-  dados.append('altura', String(foto.altura));
+  dados.append('chave', chave);
+  dados.append('foto', blob, 'foto.jpg');
+  return postar('/api/admin/imagens', dados);
+}
+
+async function postar(caminho, dados) {
   let r;
   try {
-    r = await fetch(`/api/admin/imoveis/${imovelId}/fotos`, { method: 'POST', headers: { 'X-Urupema': '1' }, body: dados, credentials: 'same-origin' });
+    r = await fetch(caminho, { method: 'POST', headers: { 'X-Urupema': '1' }, body: dados, credentials: 'same-origin' });
   } catch {
     throw new ErroApi('Sem conexão. Confira a internet e tente de novo.', 0);
   }
@@ -54,4 +72,13 @@ export async function enviarFoto(imovelId, foto) {
   if (r.status === 401) irParaLogin();
   if (!r.ok) throw new ErroApi(corpo.erro || 'Não foi possível enviar a foto.', r.status);
   return corpo;
+}
+
+export async function enviarFoto(imovelId, foto) {
+  const dados = new FormData();
+  dados.append('g', foto.g, 'g.jpg');
+  dados.append('p', foto.p, 'p.jpg');
+  dados.append('largura', String(foto.largura));
+  dados.append('altura', String(foto.altura));
+  return postar(`/api/admin/imoveis/${imovelId}/fotos`, dados);
 }

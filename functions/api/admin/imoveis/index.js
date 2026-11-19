@@ -30,19 +30,36 @@ export async function onRequestGet({ request, env }) {
 }
 
 
+// Corpo: os campos do anúncio. Importação do feed antigo (só admin, spec 10.4): também
+// { importacao: { id_externo, ref } } → origem 'importado'; mantém o ref se for "UR-<número>" e estiver livre.
 export async function onRequestPost({ request, env, data }) {
-  const v = validarImovel((await lerJson(request)) || {});
+  const corpo = (await lerJson(request)) || {};
+  const v = validarImovel(corpo);
   if (v.erro) return erro(v.erro, 400, v.campo);
   const t = agora();
   const publicado = ['ativo', 'reservado'].includes(v.dados.status) ? t : null;
 
+  let origem = 'manual';
+  let idExterno = null;
+  const refs = [];
+  if (corpo.importacao) {
+    if (data.usuario.papel !== 'admin') return erro('Só o administrador pode importar anúncios.', 403);
+    idExterno = String(corpo.importacao.id_externo || '').trim().slice(0, 50) || null;
+    if (idExterno && (await um(env.DB, "SELECT id FROM imoveis WHERE origem = 'importado' AND id_externo = ?", idExterno))) {
+      return erro(`O anúncio ${idExterno} já foi importado.`, 409);
+    }
+    origem = 'importado';
+    const original = String(corpo.importacao.ref || '').trim().toUpperCase();
+    if (/^UR-\d{1,7}$/.test(original)) refs.push(original);
+  }
+
   // A referência vem do contador; se já existir (ex.: importada), tenta a próxima.
-  for (let tentativa = 0; tentativa < 5; tentativa++) {
-    const ref = 'UR-' + (await proximo(env.DB, 'ref_imovel'));
+  for (let tentativa = 0; tentativa < 6; tentativa++) {
+    const ref = refs.shift() || 'UR-' + (await proximo(env.DB, 'ref_imovel'));
     try {
-      const r = await env.DB.prepare(`INSERT INTO imoveis (ref, ${COLUNAS.join(', ')}, origem, criado_por, criado_em, atualizado_em, publicado_em)
-        VALUES (?, ${COLUNAS.map(() => '?').join(', ')}, 'manual', ?, ?, ?, ?)`)
-        .bind(ref, ...COLUNAS.map((c) => v.dados[c]), data.usuario.id, t, t, publicado).run();
+      const r = await env.DB.prepare(`INSERT INTO imoveis (ref, ${COLUNAS.join(', ')}, origem, id_externo, criado_por, criado_em, atualizado_em, publicado_em)
+        VALUES (?, ${COLUNAS.map(() => '?').join(', ')}, ?, ?, ?, ?, ?, ?)`)
+        .bind(ref, ...COLUNAS.map((c) => v.dados[c]), origem, idExterno, data.usuario.id, t, t, publicado).run();
       return json({ id: r.meta.last_row_id, ref }, 201);
     } catch (e) {
       if (!String(e.message).includes('UNIQUE')) throw e;
