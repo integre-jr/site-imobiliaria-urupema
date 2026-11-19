@@ -15,7 +15,7 @@ Precisa de um computador com este projeto, Node.js e acesso à conta Cloudflare 
    ```bash
    npx wrangler whoami        # deve mostrar "Urupema Negócios Imobiliários"
    ```
-2. Gere o comando com a senha nova (pelo menos 8 caracteres):
+2. Gere o comando com a senha nova (pelo menos 12 caracteres, sem o nome da imobiliária, sequências ou o seu nome):
    ```bash
    node scripts/hash-senha.mjs dono@exemplo.com.br "NovaSenhaForte123"
    ```

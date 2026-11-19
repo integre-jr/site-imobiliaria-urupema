@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Testes dos marcos M5 (portais/feed VRSync) e M6 (Instagram em modo demonstração) contra o servidor LOCAL.
-# Pré-requisitos: os mesmos de scripts/testa-imoveis.sh (npm run dev; seed; admin admin@teste.com / senha-admin-1).
+# Pré-requisitos: os mesmos de scripts/testa-imoveis.sh (npm run dev; seed; admin admin@teste.com / painel-teste-admin-1).
 # Cria um anúncio de teste, publica no Instagram simulado e apaga tudo no fim.
 # Uso: bash scripts/testa-integracoes.sh
 B=${B:-http://localhost:8788}   # outra porta: B=http://localhost:8790 bash scripts/...
@@ -20,7 +20,7 @@ campo() { sed -n "s/.*\"$1\":\"\{0,1\}\([^\",}]*\).*/\1/p" | head -1; }
 caminho() { if command -v cygpath > /dev/null; then cygpath -m "$1"; else echo "$1"; fi; }
 jpeg() { printf '\xff\xd8\xff\xe0' > "$1"; head -c "$2" /dev/zero >> "$1"; }
 
-req POST /api/auth/login "$JA" '{"email":"admin@teste.com","senha":"senha-admin-1"}' > /dev/null
+req POST /api/auth/login "$JA" '{"email":"admin@teste.com","senha":"painel-teste-admin-1"}' > /dev/null
 curl -s -o /dev/null -b "$JA" -X DELETE -H "X-Urupema: 1" $B/api/admin/instagram/app   # começa no modo demonstração
 
 echo "Portais: feed"

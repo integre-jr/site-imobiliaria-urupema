@@ -20,8 +20,8 @@ const HTML_DIALOGOS = `
     </div>
     <div class="form-field" id="u-senha-campo">
       <label for="u-senha">Senha inicial</label>
-      <input class="input" id="u-senha" name="senha" type="password" autocomplete="new-password" minlength="8" required>
-      <span class="hint">Pelo menos 8 caracteres. A pessoa pode trocar depois em "Minha conta".</span>
+      <input class="input" id="u-senha" name="senha" type="password" autocomplete="new-password" minlength="12" required>
+      <span class="hint">Pelo menos 12 caracteres, sem o nome da imobiliária, sequências (123456) ou o nome da pessoa. Ela pode trocar depois em "Minha conta".</span>
     </div>
     <label class="check" id="u-ativo-campo"><input type="checkbox" name="ativo"> Acesso ativo</label>
     <div class="adm-form__acoes">
@@ -35,10 +35,10 @@ const HTML_DIALOGOS = `
   <form class="adm-form" id="form-senha-usuario">
     <div class="form-erro" role="alert" hidden></div>
     <p id="senha-quem"></p>
-    <div class="form-field"><label for="s-senha">Nova senha</label><input class="input" id="s-senha" name="senha" type="password" autocomplete="new-password" minlength="8" required></div>
+    <div class="form-field"><label for="s-senha">Nova senha</label><input class="input" id="s-senha" name="senha" type="password" autocomplete="new-password" minlength="12" required></div>
     <div class="form-field">
       <label for="s-confirmar">Confirme a nova senha</label>
-      <input class="input" id="s-confirmar" name="confirmar" type="password" autocomplete="new-password" minlength="8" required>
+      <input class="input" id="s-confirmar" name="confirmar" type="password" autocomplete="new-password" minlength="12" required>
       <span class="hint">A pessoa será desconectada de todos os aparelhos.</span>
     </div>
     <div class="adm-form__acoes">

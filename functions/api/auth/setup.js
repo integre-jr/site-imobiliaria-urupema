@@ -19,7 +19,7 @@ export async function onRequestPost({ request, env }) {
   }
   const nome = limpar(b.nome);
   const email = limpar(b.email).toLowerCase();
-  const falha = [['nome', validarNome(nome)], ['email', validarEmail(email)], ['senha', validarSenha(b.senha)]]
+  const falha = [['nome', validarNome(nome)], ['email', validarEmail(email)], ['senha', validarSenha(b.senha, { nome, email })]]
     .find(([, msg]) => msg);
   if (falha) return erro(falha[1], 400, falha[0]);
 

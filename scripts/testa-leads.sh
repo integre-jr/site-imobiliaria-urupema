@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Testes do marco M4 (leads e LGPD) contra o servidor LOCAL.
-# Pré-requisitos: os mesmos de scripts/testa-imoveis.sh (npm run dev; seed; admin admin@teste.com / senha-admin-1).
+# Pré-requisitos: os mesmos de scripts/testa-imoveis.sh (npm run dev; seed; admin admin@teste.com / painel-teste-admin-1).
 # Cria leads de teste (inclusive o 11º da mesma hora, para conferir o limite por IP), um corretor
 # temporário, e apaga tudo no fim. Leads que já existiam no banco local ficam como estavam.
 # Uso: bash scripts/testa-leads.sh
@@ -22,7 +22,7 @@ jpeg() { printf '\xff\xd8\xff\xe0' > "$1"; head -c "$2" /dev/zero >> "$1"; }
 lead() { req POST /api/leads "" "$1"; }
 MARCA="Teste-M4-$$"
 
-req POST /api/auth/login "$JA" '{"email":"admin@teste.com","senha":"senha-admin-1"}' > /dev/null
+req POST /api/auth/login "$JA" '{"email":"admin@teste.com","senha":"painel-teste-admin-1"}' > /dev/null
 # Começa sem leads de teste antigos deste IP na última hora (o limite é 10 por hora).
 ANTES=$(req GET "/api/admin/leads?busca=Teste-M4" "$JA")
 
@@ -97,9 +97,9 @@ confere "CSV neutraliza fórmula" "\"'=HYPERLINK(1)" "$(cat "$D/leads.csv")"
 confere "CSV sem sessão → 401" "401" "$(curl -s -o /dev/null -w '%{http_code}' $B/api/admin/leads/exportar)"
 
 echo "Papéis"
-CR=$(req POST /api/admin/usuarios "$JA" '{"nome":"Corretor Leads","email":"corretor-leads@teste.com","papel":"corretor","senha":"senha-corretor-leads-1"}')
+CR=$(req POST /api/admin/usuarios "$JA" '{"nome":"Corretor Leads","email":"corretor-leads@teste.com","papel":"corretor","senha":"geada-na-serra-leads-1"}')
 IDU=$(echo "$CR" | campo id)
-req POST /api/auth/login "$JC" '{"email":"corretor-leads@teste.com","senha":"senha-corretor-leads-1"}' > /dev/null
+req POST /api/auth/login "$JC" '{"email":"corretor-leads@teste.com","senha":"geada-na-serra-leads-1"}' > /dev/null
 confere "corretor vê os leads" '"total":' "$(req GET "/api/admin/leads?busca=$MARCA" "$JC")"
 confere "corretor atualiza lead" "200" "$(req PUT /api/admin/leads/$IDC "$JC" '{"status":"concluido"}')"
 confere "corretor NÃO exclui lead" "403" "$(req DELETE /api/admin/leads/$IDC "$JC")"

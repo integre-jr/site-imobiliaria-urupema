@@ -16,7 +16,7 @@ if (!email || !senha) {
   console.error('Uso: node scripts/hash-senha.mjs <email> <nova senha>');
   process.exit(1);
 }
-const problema = validarSenha(senha);
+const problema = validarSenha(senha, { email });
 if (problema) {
   console.error(problema);
   process.exit(1);

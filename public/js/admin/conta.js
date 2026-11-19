@@ -11,10 +11,10 @@ const HTML = `
     <div class="form-field"><label for="c-atual">Senha atual</label><input class="input" id="c-atual" name="atual" type="password" autocomplete="current-password" required></div>
     <div class="form-field">
       <label for="c-nova">Nova senha</label>
-      <input class="input" id="c-nova" name="nova" type="password" autocomplete="new-password" minlength="8" required>
-      <span class="hint">Pelo menos 8 caracteres. Os outros aparelhos conectados serão desconectados.</span>
+      <input class="input" id="c-nova" name="nova" type="password" autocomplete="new-password" minlength="12" required>
+      <span class="hint">Pelo menos 12 caracteres, sem o nome da imobiliária, sequências (123456) ou o seu nome. Uma frase de 3 ou 4 palavras é forte e fácil de lembrar. Os outros aparelhos conectados serão desconectados.</span>
     </div>
-    <div class="form-field"><label for="c-confirmar">Confirme a nova senha</label><input class="input" id="c-confirmar" name="confirmar" type="password" autocomplete="new-password" minlength="8" required></div>
+    <div class="form-field"><label for="c-confirmar">Confirme a nova senha</label><input class="input" id="c-confirmar" name="confirmar" type="password" autocomplete="new-password" minlength="12" required></div>
     <div class="adm-form__acoes"><button class="btn btn--primary btn--sm" type="submit">Trocar senha</button></div>
   </form>
   <hr class="gaveta__divisao">

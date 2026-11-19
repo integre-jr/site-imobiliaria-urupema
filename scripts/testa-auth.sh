@@ -31,20 +31,26 @@ confere "setup abre" "200" "$(curl -sL -o /dev/null -w '%{http_code}' $B/admin/s
 
 echo "Primeiro acesso"
 confere "POST sem X-Urupema dá 403" "403" "$(curl -s -o /dev/null -w '%{http_code}' -X POST $B/api/auth/setup -d '{}')"
-confere "token errado dá 403" '403 {"erro":"Código de configuração inválido.","campo":"token"}' "$(req POST /api/auth/setup '' '{"token":"x","nome":"Tomaz","email":"admin@teste.com","senha":"senha-admin-1"}')"
+confere "token errado dá 403" '403 {"erro":"Código de configuração inválido.","campo":"token"}' "$(req POST /api/auth/setup '' '{"token":"x","nome":"Tomaz","email":"admin@teste.com","senha":"painel-teste-admin-1"}')"
 confere "senha curta dá 400" '"campo":"senha"' "$(req POST /api/auth/setup '' '{"token":"dev-setup","nome":"Tomaz","email":"admin@teste.com","senha":"curta"}')"
-confere "setup cria admin" "201" "$(req POST /api/auth/setup "$JA" '{"token":"dev-setup","nome":"Tomaz Teste","email":"Admin@Teste.com","senha":"senha-admin-1"}')"
+confere "senha de 11 caracteres dá 400" '12 caracteres' "$(req POST /api/auth/setup '' '{"token":"dev-setup","nome":"Tomaz","email":"admin@teste.com","senha":"Xk9#mPq2vL7"}')"
+confere "senha óbvia (urupema2026!!) dá 400" 'fácil de adivinhar' "$(req POST /api/auth/setup '' '{"token":"dev-setup","nome":"Tomaz","email":"admin@teste.com","senha":"urupema2026!!"}')"
+confere "senha em sequência dá 400" 'fácil de adivinhar' "$(req POST /api/auth/setup '' '{"token":"dev-setup","nome":"Tomaz","email":"admin@teste.com","senha":"123456789012"}')"
+confere "senha com o próprio nome/e-mail dá 400" 'fácil de adivinhar' "$(req POST /api/auth/setup '' '{"token":"dev-setup","nome":"Tomaz Hardt","email":"tomaz.hardt@teste.com","senha":"tomaz.hardt2026"}')"
+confere "setup cria admin" "201" "$(req POST /api/auth/setup "$JA" '{"token":"dev-setup","nome":"Tomaz Teste","email":"Admin@Teste.com","senha":"painel-teste-admin-1"}')"
 confere "cookie é __Host, HttpOnly e Secure" "#HttpOnly_localhost" "$(grep __Host-urupema_sessao "$JA")"
 confere "setup some depois (página)" "404" "$(curl -sL -o /dev/null -w '%{http_code}' $B/admin/setup)"
 confere "setup some depois (API)" "404" "$(req POST /api/auth/setup '' '{"token":"dev-setup","nome":"X","email":"x@x.com","senha":"12345678"}')"
 confere "me devolve o admin (e-mail minúsculo)" '"email":"admin@teste.com","papel":"admin"' "$(req GET /api/auth/me "$JA")"
 confere "painel abre logado" "200" "$(curl -sL -o /dev/null -w '%{http_code}' -b "$JA" $B/admin/)"
 confere "painel sem cache" "no-store" "$(curl -sL -D - -o /dev/null -b "$JA" $B/admin/ | grep -i cache-control)"
+confere "painel não abre dentro de outro site" "frame-ancestors 'none'" "$(curl -sL -D - -o /dev/null -b "$JA" $B/admin/ | grep -i content-security-policy)"
+confere "login também não" "DENY" "$(curl -s -D - -o /dev/null $B/admin/login | grep -i x-frame-options)"
 confere "login logado vai ao painel" "302" "$(curl -s -o /dev/null -w '%{http_code}' -b "$JA" $B/admin/login)"
 
 echo "Usuários"
-confere "admin cria corretor" "201" "$(req POST /api/admin/usuarios "$JA" '{"nome":"Ana Corretora","email":"ana@teste.com","papel":"corretor","senha":"senha-ana-1"}')"
-confere "e-mail repetido dá 409" '409 {"erro":"Já existe um usuário com este e-mail.","campo":"email"}' "$(req POST /api/admin/usuarios "$JA" '{"nome":"Outra","email":"ANA@teste.com","papel":"corretor","senha":"senha-ana-1"}')"
+confere "admin cria corretor" "201" "$(req POST /api/admin/usuarios "$JA" '{"nome":"Ana Corretora","email":"ana@teste.com","papel":"corretor","senha":"geada-na-serra-ana-1"}')"
+confere "e-mail repetido dá 409" '409 {"erro":"Já existe um usuário com este e-mail.","campo":"email"}' "$(req POST /api/admin/usuarios "$JA" '{"nome":"Outra","email":"ANA@teste.com","papel":"corretor","senha":"geada-na-serra-ana-1"}')"
 confere "papel inválido dá 400" '"campo":"papel"' "$(req POST /api/admin/usuarios "$JA" '{"nome":"X","email":"x@teste.com","papel":"dono","senha":"12345678"}')"
 confere "lista tem 2" '"email":"ana@teste.com"' "$(req GET /api/admin/usuarios "$JA")"
 ID_ADMIN=$(req GET /api/auth/me "$JA" | grep -o '"id":[0-9]*' | cut -d: -f2)
@@ -54,7 +60,7 @@ confere "admin não se desativa" "409" "$(req PUT /api/admin/usuarios/$ID_ADMIN 
 confere "admin não se exclui" "409" "$(req DELETE /api/admin/usuarios/$ID_ADMIN "$JA")"
 
 echo "Corretor"
-confere "corretor entra" "200" "$(req POST /api/auth/login "$JC" '{"email":"ana@teste.com","senha":"senha-ana-1","manter":true}')"
+confere "corretor entra" "200" "$(req POST /api/auth/login "$JC" '{"email":"ana@teste.com","senha":"geada-na-serra-ana-1","manter":true}')"
 confere "manter conectado = cookie de 30 dias" "__Host-urupema_sessao" "$(awk '$5 > 0' "$JC")"
 confere "corretor não lista usuários (API)" "403" "$(req GET /api/admin/usuarios "$JC")"
 confere "corretor não cria usuário (API)" "403" "$(req POST /api/admin/usuarios "$JC" '{"nome":"X","email":"y@teste.com","papel":"admin","senha":"12345678"}')"
@@ -67,23 +73,25 @@ confere "corretor não edita os dados do site" "403" "$(req PUT /api/admin/confi
 
 echo "Troca de senha"
 cp "$JC" "$D/jar-corretor-2.txt"
-req POST /api/auth/login "$D/jar-corretor-2.txt" '{"email":"ana@teste.com","senha":"senha-ana-1"}' > /dev/null
-confere "senha atual errada dá 400" '"campo":"atual"' "$(req POST /api/auth/senha "$JC" '{"atual":"errada","nova":"senha-ana-2"}')"
-confere "nova senha curta dá 400" '"campo":"nova"' "$(req POST /api/auth/senha "$JC" '{"atual":"senha-ana-1","nova":"123"}')"
-confere "troca a senha" "200" "$(req POST /api/auth/senha "$JC" '{"atual":"senha-ana-1","nova":"senha-ana-2"}')"
+req POST /api/auth/login "$D/jar-corretor-2.txt" '{"email":"ana@teste.com","senha":"geada-na-serra-ana-1"}' > /dev/null
+confere "senha atual errada dá 400" '"campo":"atual"' "$(req POST /api/auth/senha "$JC" '{"atual":"errada","nova":"geada-na-serra-ana-2"}')"
+confere "nova senha curta dá 400" '"campo":"nova"' "$(req POST /api/auth/senha "$JC" '{"atual":"geada-na-serra-ana-1","nova":"123"}')"
+confere "nova senha óbvia dá 400" '"campo":"nova"' "$(req POST /api/auth/senha "$JC" '{"atual":"geada-na-serra-ana-1","nova":"senha-admin-123"}')"
+confere "admin não define senha fraca para outro" '"campo":"senha"' "$(req PUT /api/admin/usuarios/$ID_ANA "$JA" '{"senha":"imoveis123456"}')"
+confere "troca a senha" "200" "$(req POST /api/auth/senha "$JC" '{"atual":"geada-na-serra-ana-1","nova":"geada-na-serra-ana-2"}')"
 confere "sessão atual continua" "200" "$(req GET /api/auth/me "$JC")"
 confere "outro aparelho foi desconectado" "401" "$(req GET /api/auth/me "$D/jar-corretor-2.txt")"
-confere "senha antiga não entra" "401" "$(req POST /api/auth/login '' '{"email":"ana@teste.com","senha":"senha-ana-1"}')"
+confere "senha antiga não entra" "401" "$(req POST /api/auth/login '' '{"email":"ana@teste.com","senha":"geada-na-serra-ana-1"}')"
 
 echo "Admin gerencia o corretor"
-confere "admin redefine senha da Ana" "200" "$(req PUT /api/admin/usuarios/$ID_ANA "$JA" '{"senha":"senha-ana-3"}')"
+confere "admin redefine senha da Ana" "200" "$(req PUT /api/admin/usuarios/$ID_ANA "$JA" '{"senha":"geada-na-serra-ana-3"}')"
 confere "sessões da Ana caem" "401" "$(req GET /api/auth/me "$JC")"
-confere "Ana entra com a senha redefinida" "200" "$(req POST /api/auth/login "$JC" '{"email":"ana@teste.com","senha":"senha-ana-3"}')"
+confere "Ana entra com a senha redefinida" "200" "$(req POST /api/auth/login "$JC" '{"email":"ana@teste.com","senha":"geada-na-serra-ana-3"}')"
 confere "admin desativa a Ana" "200" "$(req PUT /api/admin/usuarios/$ID_ANA "$JA" '{"ativo":false}')"
 confere "Ana desativada perde a sessão" "401" "$(req GET /api/auth/me "$JC")"
-confere "Ana desativada não entra" "401" "$(req POST /api/auth/login '' '{"email":"ana@teste.com","senha":"senha-ana-3"}')"
+confere "Ana desativada não entra" "401" "$(req POST /api/auth/login '' '{"email":"ana@teste.com","senha":"geada-na-serra-ana-3"}')"
 confere "admin promove e reativa" "200" "$(req PUT /api/admin/usuarios/$ID_ANA "$JA" '{"ativo":true,"papel":"admin"}')"
-confere "Ana agora admin lista usuários" "200" "$(req POST /api/auth/login "$JC" '{"email":"ana@teste.com","senha":"senha-ana-3"}' >/dev/null; req GET /api/admin/usuarios "$JC")"
+confere "Ana agora admin lista usuários" "200" "$(req POST /api/auth/login "$JC" '{"email":"ana@teste.com","senha":"geada-na-serra-ana-3"}' >/dev/null; req GET /api/admin/usuarios "$JC")"
 confere "admin exclui a Ana" "200" "$(req DELETE /api/admin/usuarios/$ID_ANA "$JA")"
 confere "excluir de novo dá 404" "404" "$(req DELETE /api/admin/usuarios/$ID_ANA "$JA")"
 
@@ -120,9 +128,9 @@ confere "valores originais restaurados" '"redes.instagram":"https://instagram.co
 
 echo "Instagram (modo demonstração)"
 JK="$D/jar-caio.txt"
-req POST /api/admin/usuarios "$JA" '{"nome":"Caio Corretor","email":"caio@teste.com","papel":"corretor","senha":"senha-caio-1"}' > /dev/null
-req POST /api/auth/login "$JK" '{"email":"caio@teste.com","senha":"senha-caio-1"}' > /dev/null
-confere "status começa desconectado" '"modo":"mock","app_configurado":true,"conectado":false' "$(req GET /api/admin/instagram/status "$JA")"
+req POST /api/admin/usuarios "$JA" '{"nome":"Caio Corretor","email":"caio@teste.com","papel":"corretor","senha":"geada-na-serra-caio-1"}' > /dev/null
+req POST /api/auth/login "$JK" '{"email":"caio@teste.com","senha":"geada-na-serra-caio-1"}' > /dev/null
+confere "status começa desconectado" '"conectado":false,"expirado":false,"conta":null' "$(req GET /api/admin/instagram/status "$JA")"
 confere "corretor vê o status sem poder gerenciar" '"pode_gerenciar":false' "$(req GET /api/admin/instagram/status "$JK")"
 confere "corretor não conecta" "403" "$(req GET /api/admin/instagram/conectar "$JK")"
 confere "sem sessão não conecta" "401" "$(req GET /api/admin/instagram/conectar)"
@@ -154,7 +162,12 @@ confere "o cookie antigo também não vale mais" "401" "$(req GET /api/auth/me "
 
 echo "Força bruta (por último: bloqueia este IP por 15 min)"
 for i in 1 2 3 4 5; do req POST /api/auth/login '' '{"email":"admin@teste.com","senha":"errada"}' > /dev/null; done
-confere "6ª tentativa dá 429" "429" "$(req POST /api/auth/login '' '{"email":"admin@teste.com","senha":"senha-admin-1"}')"
+confere "6ª tentativa dá 429" "429" "$(req POST /api/auth/login '' '{"email":"admin@teste.com","senha":"painel-teste-admin-1"}')"
+# Mesma conta atacada de vários IPs (o servidor local aceita CF-Connecting-IP do curl): 10 falhas → conta travada.
+ipreq() { curl -s -o /dev/null -w '%{http_code}' -X POST $B/api/auth/login -H 'X-Urupema: 1' -H "CF-Connecting-IP: $1" -H 'Content-Type: application/json' -d "$2"; }
+for i in $(seq 1 10); do ipreq 10.9.0.$i '{"email":"caio@teste.com","senha":"errada"}' > /dev/null; done
+confere "conta atacada de 10 IPs fica travada" "429" "$(ipreq 10.9.0.99 '{"email":"caio@teste.com","senha":"geada-na-serra-caio-1"}')"
+confere "outra conta, de outro IP, segue entrando" "401" "$(ipreq 10.9.0.98 '{"email":"ninguem@teste.com","senha":"qualquer-coisa-1"}')"
 
 echo "Site público igual ao HTML (com os dados originais; o contato só muda o endereço do mapa)"
 cd "$RAIZ/public"

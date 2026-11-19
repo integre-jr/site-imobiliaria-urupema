@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Testes do marco M3 (imóveis e anúncios) contra o servidor LOCAL.
 # Pré-requisitos: npm run dev rodando; banco local com o seed (npm run db:local) e com um admin
-# admin@teste.com / senha-admin-1 (o scripts/testa-auth.sh cria; depois dele, limpe tentativas_login:
+# admin@teste.com / painel-teste-admin-1 (o scripts/testa-auth.sh cria; depois dele, limpe tentativas_login:
 #   npx wrangler d1 execute urupema --local --command "DELETE FROM tentativas_login").
 # Uso: bash scripts/testa-imoveis.sh   (cria e apaga um anúncio de teste; o seed fica como estava)
 B=${B:-http://localhost:8788}   # outra porta: B=http://localhost:8790 bash scripts/...
@@ -19,7 +19,7 @@ req() {
 # JPEG mínimo: só a assinatura importa para o servidor (o navegador manda fotos de verdade)
 jpeg() { printf '\xff\xd8\xff\xe0' > "$1"; head -c "$2" /dev/zero >> "$1"; }
 
-req POST /api/auth/login "$JA" '{"email":"admin@teste.com","senha":"senha-admin-1"}' > /dev/null
+req POST /api/auth/login "$JA" '{"email":"admin@teste.com","senha":"painel-teste-admin-1"}' > /dev/null
 
 echo "Site público"
 confere "lista pública só com publicados" '"total":6' "$(curl -s "$B/api/imoveis")"

@@ -30,7 +30,7 @@ export async function onRequestPut(context) {
     ['nome', validarNome(novo.nome)],
     ['email', validarEmail(novo.email)],
     ['papel', PAPEIS.includes(novo.papel) ? undefined : 'Papel inválido.'],
-    ['senha', b.senha !== undefined ? validarSenha(b.senha) : undefined],
+    ['senha', b.senha !== undefined ? validarSenha(b.senha, novo) : undefined],
   ].find(([, msg]) => msg);
   if (falha) return erro(falha[1], 400, falha[0]);
   if (ehVoce && (novo.papel !== 'admin' || !novo.ativo)) {

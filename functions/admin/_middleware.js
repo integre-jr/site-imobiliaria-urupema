@@ -9,7 +9,11 @@ import { um } from '../../lib/db.js';
 import { paginaImovel } from '../../lib/pagina-imovel.js';
 
 const PAGINAS_DO_SITE = new Set(['index', 'imoveis', 'sobre', 'financie', 'negocie', 'contato', 'privacidade']);
-const SEM_CACHE = { 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' };
+// O painel nunca pode ser aberto dentro de outro site (clickjacking: um clique "escondido" publicaria ou excluiria algo).
+const SEM_CACHE = {
+  'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex',
+  'X-Frame-Options': 'DENY', 'Content-Security-Policy': "frame-ancestors 'none'", 'Referrer-Policy': 'same-origin',
+};
 
 const redirecionar = (url, caminho) => new Response(null, { status: 302, headers: { Location: new URL(caminho, url).href } });
 const naoEncontrado = () => new Response('Página não encontrada.', { status: 404, headers: SEM_CACHE });

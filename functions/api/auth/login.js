@@ -16,7 +16,7 @@ export async function onRequestPost({ request, env }) {
     env.DB.prepare('DELETE FROM sessoes WHERE expira_em < ?').bind(agora()),
   ]);
 
-  if (await bloqueado(env, ip)) return erroBloqueio();
+  if (await bloqueado(env, ip, email)) return erroBloqueio();
 
   const u = email && senha ? await um(env.DB, 'SELECT id, senha_hash, ativo FROM usuarios WHERE email = ?', email) : null;
   // Sem usuário, calcula um hash mesmo assim: o tempo de resposta não revela quais e-mails existem.
@@ -26,7 +26,7 @@ export async function onRequestPost({ request, env }) {
     return erro('E-mail ou senha inválidos.', 401);
   }
 
-  await executar(env.DB, 'DELETE FROM tentativas_login WHERE ip = ?', ip);
+  await executar(env.DB, 'DELETE FROM tentativas_login WHERE ip = ? OR email = ?', ip, email);
   const cookie = await criarSessao(env, request, u.id, b.manter === true);
   return json({ ok: true }, 200, { 'Set-Cookie': cookie });
 }

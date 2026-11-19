@@ -23,7 +23,7 @@ export async function onRequestPost({ request, env, data }) {
     ['nome', validarNome(nome)],
     ['email', validarEmail(email)],
     ['papel', papel ? undefined : 'Escolha o papel.'],
-    ['senha', validarSenha(b.senha)],
+    ['senha', validarSenha(b.senha, { nome, email })],
   ].find(([, msg]) => msg);
   if (falha) return erro(falha[1], 400, falha[0]);
 

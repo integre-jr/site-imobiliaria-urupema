@@ -440,7 +440,7 @@ O painel **não** é um sistema separado: é o site, com os pontos de edição l
 
 ### 8.1 Autenticação (`lib/auth.js`)
 - **Senha:** PBKDF2-SHA256, **100000** iterações, salt de 16 bytes, hash de 32 bytes (WebCrypto).
-  Comparação em tempo constante. Mínimo de 8 caracteres.
+  Comparação em tempo constante. Mínimo de 12 caracteres e recusa de senhas óbvias (nome da imobiliária, "senha", "admin", sequências, nome ou e-mail da pessoa), `lib/validacao.js` (endurecido em 19/11/2026).
 - **Sessão:** token aleatório de 32 bytes (base64url) no cookie `__Host-urupema_sessao`
   (`HttpOnly; Secure; SameSite=Lax; Path=/`). No D1 fica só `SHA-256(token + SESSION_PEPPER)`.
   Validade de 7 dias, ou 30 com "manter conectado". Renova `expira_em` se faltar menos da metade.

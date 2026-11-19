@@ -9,10 +9,10 @@ export async function onRequestPost({ request, env }) {
   if (!s) return erro('Sua sessão expirou. Entre de novo.', 401);
 
   const ip = ipDe(request);
-  if (await bloqueado(env, ip)) return erroBloqueio();
+  if (await bloqueado(env, ip, s.usuario.email)) return erroBloqueio();
 
   const b = (await lerJson(request)) || {};
-  const msg = validarSenha(b.nova);
+  const msg = validarSenha(b.nova, s.usuario);
   if (msg) return erro(msg, 400, 'nova');
 
   const u = await um(env.DB, 'SELECT senha_hash FROM usuarios WHERE id = ?', s.usuario.id);
