@@ -350,7 +350,7 @@ Manter **todos** os comportamentos atuais (ver `CLAUDE.md`) e mudar:
   `.badge--sale`/`.badge--rent`, `.card-fav[data-ref]`, `.card-ref`, `.card-price` (aluguel com
   `<span class="per">/mês</span>`), `.card-title`, `.card-loc`, `.card-specs`, link **"Ver detalhes" →
   `/imovel/<ref>`**). `data-type` = `venda` ou `aluguel` (venda_aluguel → `venda`, e o card mostra os dois preços).
-- **Home:** `.property-grid` busca `GET /api/imoveis?destaque=1&limite=6`. Os 6 cards estáticos atuais
+- **Home:** `.property-grid` busca `GET /api/imoveis?destaque=1&limite=6`. Os 6 cards estáticos atuais (trocados em 19/11/2026 por um aviso com link para a listagem, porque eram fictícios)
   ficam no HTML como conteúdo **sem JS**; com JS, são substituídos pela resposta da API. Se a API
   falhar, ficam os estáticos.
 - **Searchbar da home:** "Pesquisar Imóveis" monta `imoveis.html?finalidade=venda|aluguel&tipo=…&bairro=…&min=…&max=…&ref=…`
