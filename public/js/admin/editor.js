@@ -144,7 +144,9 @@ function atualizarPagina(novo) {
     if (h) el.href = h;
   });
   document.querySelectorAll('[data-cfg-mapa]').forEach((el) => {
+    // No painel o mapa já abre (é o dono quem está vendo); no site público só depois do clique.
     if (el.src !== estado.mapa) el.src = estado.mapa;
+    el.closest('.map-frame')?.classList.add('is-loaded');
   });
 }
 

@@ -160,10 +160,16 @@
           </div>
 
           <div class="map-frame">
+            <!-- O mapa do Google só carrega no clique (sem cookies de terceiros antes disso; ver privacidade.html). -->
             <iframe
-              data-cfg-mapa src="https://www.google.com/maps?q=Rua%20Artur%20Pagani%2C%2008%2C%20Centro%2C%20Urupema%20-%20SC%2C%2088625-000&output=embed"
+              data-cfg-mapa data-src="https://www.google.com/maps?q=Rua%20Artur%20Pagani%2C%2008%2C%20Centro%2C%20Urupema%20-%20SC%2C%2088625-000&output=embed"
               title="Mapa — Urupema Negócios Imobiliários"
               loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            <a class="map-load" data-cfg-mapa-link target="_blank" rel="noopener"
+               href="https://www.google.com/maps?q=Rua%20Artur%20Pagani%2C%2008%2C%20Centro%2C%20Urupema%20-%20SC%2C%2088625-000">
+              <span class="map-load__btn"><svg><use href="#i-pin"/></svg> Mostrar o mapa</span>
+              <span class="map-load__nota">O mapa é do Google e pode gravar cookies dele.</span>
+            </a>
             <div class="map-pin-card">
               <svg><use href="#i-pin"/></svg>
               <div>

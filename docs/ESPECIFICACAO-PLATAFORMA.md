@@ -44,7 +44,7 @@ Motivação: hoje ele paga ~R$ 1.000/ano por um site com isso, mais a OLX. O nov
 | **Contas conectadas pelo próprio cliente no painel** | Instagram: botão "Conectar" + login dele (OAuth). Portais: o painel mostra a URL do feed e o passo a passo para colar no Canal Pro uma vez (o Grupo OLX não tem "conectar com OLX") |
 
 **Conta Cloudflare:** `Urupema Negócios Imobiliários`, ID `52ffddfe5261caf722e5dd9467baa041`, login
-`tomaz.hardt+urupema@integrejr.com.br`. O `wrangler` desta máquina já está autenticado nela (conferir
+da INTEGRE (e-mail de projeto, fora do repositório). O `wrangler` desta máquina já está autenticado nela (conferir
 com `npx wrangler whoami` antes de qualquer comando remoto). Na entrega, o cliente entra como Super
 Administrator e a INTEGRE sai da conta.
 

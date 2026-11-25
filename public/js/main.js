@@ -314,6 +314,16 @@
     input?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); go(); } });
   });
 
+  /* ---------- Mapa só no clique (sem JS, o link abre o Google Maps em outra aba) ---------- */
+  $$('.map-load').forEach(a => a.addEventListener('click', e => {
+    const frame = a.closest('.map-frame');
+    const iframe = frame?.querySelector('iframe[data-src]');
+    if (!iframe) return;
+    e.preventDefault();
+    iframe.src = iframe.dataset.src;
+    frame.classList.add('is-loaded');
+  }));
+
   /* ---------- Footer year ---------- */
   $$('.js-year').forEach(el => el.textContent = new Date().getFullYear());
 

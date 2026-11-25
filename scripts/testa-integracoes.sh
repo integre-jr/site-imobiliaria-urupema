@@ -60,6 +60,22 @@ U2=$(req POST /api/admin/portais "$JA" '{"acao":"novo_endereco"}' | campo url)
 confere "endereço antigo para de funcionar" "404" "$(curl -s -o /dev/null -w '%{http_code}' "$URL")"
 confere "endereço novo funciona" "<ListingID>$REF</ListingID>" "$(curl -s "$U2")"
 
+echo "Portais: importado mantém o código do fornecedor antigo"
+IMP=$(echo "$NOVO" | sed 's/"titulo":"Casa de teste das integrações"/"titulo":"Casa importada de teste","importacao":{"id_externo":"TEC-4521","ref":"TEC-4521"}/')
+R=$(req POST /api/admin/imoveis "$JA" "$IMP")
+confere "cria anúncio importado" "201" "$R"
+IID=$(echo "$R" | campo id); IREF=$(echo "$R" | campo ref)
+for n in 1 2 3 4 5; do
+  jpeg "$D/g.jpg" 2000; jpeg "$D/p.jpg" 500
+  curl -s -o /dev/null -b "$JA" -H "X-Urupema: 1" -F "g=@$(caminho "$D")/g.jpg;type=image/jpeg" -F "p=@$(caminho "$D")/p.jpg;type=image/jpeg" -F largura=1600 -F altura=1200 "$B/api/admin/imoveis/$IID/fotos"
+done
+F=$(curl -s "$U2")
+confere "feed usa o código antigo (TEC-4521)" "<ListingID>TEC-4521</ListingID>" "$F"
+nao_tem "feed não usa o ref novo do importado" "<ListingID>$IREF</ListingID>" "$F"
+confere "o próprio do site continua com o ref" "<ListingID>$REF</ListingID>" "$F"
+req PUT /api/admin/imoveis/$IID "$JA" '{"status":"arquivado"}' > /dev/null
+confere "apaga o importado de teste" "200" "$(req DELETE /api/admin/imoveis/$IID "$JA")"
+
 echo "Instagram (modo demonstração)"
 curl -s -o /dev/null -b "$JA" -X POST -H "X-Urupema: 1" $B/api/admin/instagram/desconectar
 confere "publicar sem conta conectada" "409" "$(req POST /api/admin/instagram/publicar "$JA" "{\"imovel_id\":$ID,\"legenda\":\"x\",\"midias\":[]}")"

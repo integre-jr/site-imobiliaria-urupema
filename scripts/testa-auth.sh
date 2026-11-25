@@ -174,7 +174,8 @@ cd "$RAIZ/public"
 for f in index.html sobre.html financie.html negocie.html; do
   curl -sL -o "$D/pagina.html" "$B/$f"; cmp -s "$D/pagina.html" "$f" && confere "$f idêntico" "s" "s" || confere "$f idêntico" "igual" "diferente"
 done
-# O <iframe> do mapa ocupa 4 linhas no arquivo e 1 na página servida: 5 linhas diferentes, nada além disso.
-confere "contato.html só difere no mapa" "5" "$(curl -sL $B/contato.html | diff - contato.html | grep -c '^[<>]')"
+# O mapa (<iframe> com 4 linhas + link "Mostrar o mapa" com 2) vira 2 linhas na página servida:
+# 8 linhas diferentes, nada além disso.
+confere "contato.html só difere no mapa" "8" "$(curl -sL $B/contato.html | diff - contato.html | grep -c '^[<>]')"
 
 echo; echo "Resultado: $OK ok, $FALHA falha(s)"
